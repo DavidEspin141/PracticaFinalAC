@@ -1,0 +1,43 @@
+---
+title: "Aprendizaje Computacional: Práctica Final 2024/2025"
+author: "Pedro García Montoya, Mario Martínez Turpin y David Espín Jiménez"
+output:
+  html_document:
+    theme: spacelab
+    highlight: kate
+    df_print: paged
+    toc: yes
+    toc_float: yes
+    number_sections: yes
+  pdf_document:
+    toc: yes
+editor_options:
+  markdown:
+    wrap: 72
+---
+# Carga de la base de datos
+Con esto comprobamos que hemos cargado de manera correcta la base de datos. 
+```{r}
+credit<- read.csv("credit+approval/crx.data", header=FALSE)
+credit.trainIdx<-readRDS("credit.trainIdx.rds")
+credit.Datos.Train<-credit[credit.trainIdx,]
+credit.Datos.Test<-credit[-credit.trainIdx,]
+nrow(credit.Datos.Train)
+nrow(credit.Datos.Test)
+```
+# Sección 1: Análisis DEA
+Antes de ponernos a tratar con los datos y analizar en detalle las variables como se pide en el enunciado, hemos accedido a la página web de la base de datos pues esta nos ofrece bastante información sobre el tipo de datos que estamos tratando.  
+Esta base de datos trata con valores relacionados con aplicaciones de tarjetas de crédito, es por ello por lo que las variables y sus correspondientes valores están cifrados con valores sin signficado, por la confidencialidad de datos.  
+Para esta práctica vamos a trabajar con el **aprendizaje supervisado** donde tenemos 15 predictores (V1-V15) y una variable de respuesta $y$ (V16).
+
+Si comprobamos la estructura de nuestra base de datos y la analizamos, podemos ver como los datos no se han importado de la manera correcta.
+Esto lo podemos ver comparando el tipo de dato ofrecido por el comando `str(credit)` con la información de <https://archive.ics.uci.edu/dataset/27/credit+approval}
+
+```{r}
+str(credit)
+```
+
+Podemos ver como las variables categóricas (V1,V4,V5,V6,V7,V9,V10,V12,V13 y V16) no se han importado como tales, sino como caracteres (chr).
+Del mismo modo, V2 que es una variable numérica no tiene ese tipo de datos.
+Por tanto, lo primero que debemos de hacer antes de hacer ningún análisis de las variables es corregir esto. 
+
