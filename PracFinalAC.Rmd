@@ -15,8 +15,12 @@ editor_options:
   markdown:
     wrap: 72
 ---
+
 # Carga de la base de datos
-Con esto comprobamos que hemos cargado de manera correcta la base de datos. 
+
+Con esto comprobamos que hemos cargado de manera correcta la base de
+datos.
+
 ```{r}
 credit<- read.csv("credit+approval/crx.data", header=FALSE)
 credit.trainIdx<-readRDS("credit.trainIdx.rds")
@@ -25,19 +29,99 @@ credit.Datos.Test<-credit[-credit.trainIdx,]
 nrow(credit.Datos.Train)
 nrow(credit.Datos.Test)
 ```
-# Sección 1: Análisis DEA
-Antes de ponernos a tratar con los datos y analizar en detalle las variables como se pide en el enunciado, hemos accedido a la página web de la base de datos pues esta nos ofrece bastante información sobre el tipo de datos que estamos tratando.  
-Esta base de datos trata con valores relacionados con aplicaciones de tarjetas de crédito, es por ello por lo que las variables y sus correspondientes valores están cifrados con valores sin signficado, por la confidencialidad de datos.  
-Para esta práctica vamos a trabajar con el **aprendizaje supervisado** donde tenemos 15 predictores (V1-V15) y una variable de respuesta $y$ (V16).
 
-Si comprobamos la estructura de nuestra base de datos y la analizamos, podemos ver como los datos no se han importado de la manera correcta.
-Esto lo podemos ver comparando el tipo de dato ofrecido por el comando `str(credit)` con la información de <https://archive.ics.uci.edu/dataset/27/credit+approval}
+# Sección 1: Análisis DEA
+
+Antes de ponernos a tratar con los datos y analizar en detalle las
+variables como se pide en el enunciado, hemos accedido a la página web
+de la base de datos pues esta nos ofrece bastante información sobre el
+tipo de datos que estamos tratando.\
+Esta base de datos trata con valores relacionados con aplicaciones de
+tarjetas de crédito, es por ello por lo que las variables y sus
+correspondientes valores están cifrados con valores sin signficado, por
+la confidencialidad de datos.\
+Para esta práctica vamos a trabajar con el **aprendizaje supervisado**
+donde tenemos 15 predictores (V1-V15) y una variable de respuesta $y$
+(V16).
+
+Si comprobamos la estructura de nuestra base de datos y la analizamos,
+podemos ver como los datos no se han importado de la manera correcta.
+Esto lo podemos ver comparando el tipo de dato ofrecido por el comando
+`str(credit)` con la información de
+\<<https://archive.ics.uci.edu/dataset/27/credit+approval>}
 
 ```{r}
 str(credit)
 ```
 
-Podemos ver como las variables categóricas (V1,V4,V5,V6,V7,V9,V10,V12,V13 y V16) no se han importado como tales, sino como caracteres (chr).
-Del mismo modo, V2 que es una variable numérica no tiene ese tipo de datos.
-Por tanto, lo primero que debemos de hacer antes de hacer ningún análisis de las variables es corregir esto. 
+Podemos ver como las variables categóricas
+(V1,V4,V5,V6,V7,V9,V10,V12,V13 y V16) no se han importado como tales,
+sino como caracteres (chr). Del mismo modo, V2 que es una variable
+numérica no tiene ese tipo de datos. Por tanto, lo primero que debemos
+de hacer antes de hacer ningún análisis de las variables es corregir
+esto.
 
+```{r}
+categoricos_col<-c("V1","V4","V5","V6","V7","V9","V10","V12","V13","V16")
+credit[categoricos_col]<-lapply(credit[categoricos_col],FUN = as.factor)
+str(credit)
+```
+
+Tras aplicar la transformación en los datos para convertirlos en
+categóricos, podemos apreciar que algunos de ellos poseen más niveles de
+los que aparecen en la página web, esto se debe a que hay algunos que
+tienen valores incompletos, por los que también los considera como
+nivel. A parte, podemos apreciar que la variable V4, posee 3 niveles (si
+descontamos el nivel resultante de los valores incompletos), por lo que
+según la información que hay en la página web, nos faltaría un nivel.
+Podemos llegar a la conclusión de que este, es un valor que forma parte
+del dominio, para este nivel no hay ningún valor que aparezca en los
+datos.
+
+A continuación, vamos a observar de mejor forma la división de niveles
+con el comando `levels()`.
+
+```{r}
+levels(credit$V1)
+levels(credit$V4)
+levels(credit$V5)
+levels(credit$V6)
+levels(credit$V7)
+
+
+```
+
+Con esto apreciamos de mejor forma, que las variables categóricas que
+tienen valores nulos son V1,V4,V5,V6 y V7. Además, como hemos mencionado
+antes, en la variable V4 vemos como no aparece el nivel "t".
+
+Esto se puede añadir facilmente de la siguiente manera:
+
+```{r}
+levels(credit$V4)<-c(levels(credit$V4),"t")
+str(credit$V4)
+```
+
+POR HACERRRRRRRRRRR
+
+Por otro lado, también tenemos que transformar el tipo de datos de la
+variable V14, ya que en una primera instancia, estos estan considerados
+como "char". Para esto hay que antes tratar los valores desconocidos.
+
+Podemos realizar la conversión de forma similar a la anterior con
+`lapply()`:
+
+```{r}
+credit<-lapply(credit$V14,FUN = as.integer)
+str(credit$V14)
+```
+
+
+
+## Análisis monovariable
+
+A continuación, vamos a llevar a cabo el análisis monovariable de algunas de las variables del conjunto de datos.
+
+
+
+## Análisis multivariable
