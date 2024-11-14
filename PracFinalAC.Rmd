@@ -21,6 +21,7 @@ editor_options:
 Con esto comprobamos que hemos cargado de manera correcta la base de
 datos.
 
+
 ```{r}
 credit<- read.csv("credit+approval/crx.data", header=FALSE)
 credit.trainIdx<-readRDS("credit.trainIdx.rds")
@@ -92,9 +93,28 @@ levels(credit$V7)
 ```
 
 Con esto apreciamos de mejor forma, que las variables categóricas que
-tienen valores nulos son V1,V4,V5,V6 y V7. Además, como hemos mencionado
-antes, en la variable V4 vemos como no aparece el nivel "t".
+tienen valores nulos son V1,V4,V5,V6 y V7.
 
+
+Como hemos analizado, nuestra base de datos cuenta con datos missing, por lo que sería conveniente cargarla de nuevo, pero indicándolo, para que así se guarden directamente como datos NA y se pueda hacer un tratamiento correcto de estos datos luego. 
+```{r}
+rm(list = ls())
+credit<- read.csv("credit+approval/crx.data", header=FALSE,na.strings = "?")
+credit.trainIdx<-readRDS("credit.trainIdx.rds")
+credit.Datos.Train<-credit[credit.trainIdx,]
+credit.Datos.Test<-credit[-credit.trainIdx,]
+nrow(credit.Datos.Train)
+nrow(credit.Datos.Test)
+```
+
+Una vez hecho esto, hay que aplicar todos los pasos anteriores para dejar las variables con su tipo correspondiente. 
+```{r}
+categoricos_col<-c("V1","V4","V5","V6","V7","V9","V10","V12","V13","V16")
+credit[categoricos_col]<-lapply(credit[categoricos_col],FUN = as.factor)
+str(credit)
+```
+
+Además, como hemos mencionado antes, en la variable V4 vemos como no aparece el nivel "t".\
 Esto se puede añadir facilmente de la siguiente manera:
 
 ```{r}
@@ -102,18 +122,11 @@ levels(credit$V4)<-c(levels(credit$V4),"t")
 str(credit$V4)
 ```
 
-POR HACERRRRRRRRRRR
 
-Por otro lado, también tenemos que transformar el tipo de datos de la
-variable V14, ya que en una primera instancia, estos estan considerados
-como "char". Para esto hay que antes tratar los valores desconocidos.
 
-Podemos realizar la conversión de forma similar a la anterior con
-`lapply()`:
-
+Una vez hechos los cambios anteriores y antes de pasar a hacer un análisis monovariable de algunas de las variables, vamos a ver de manera resumida que información aporta cada variable, así como la cantidad de datos desconocidos que tiene. 
 ```{r}
-credit<-lapply(credit$V14,FUN = as.integer)
-str(credit$V14)
+summary(credit)
 ```
 
 
