@@ -1,0 +1,12 @@
+Estrategia Mixta para tu Trabajo
+	Dado que necesitas comparar diferentes modelos (regresión lineal, SVM, Random Forest, etc.), te recomiendo un enfoque mixto:
+
+	Paso 1: Explorar y Identificar los Outliers
+	Usa gráficos (boxplots, histogramas, scatterplots) para identificar las variables con outliers.
+	Determina si los outliers son errores, valores extremos legítimos o casos atípicos importantes.
+	Paso 2: Entrenar Modelos con y sin Tratamiento de Outliers
+	Conserva los datos originales (sin tratar los outliers):
+	Útil para modelos robustos como Random Forest y Árboles de Decisión.
+	Crea un conjunto de datos tratado (con winsorización o eliminación de outliers):
+	Para modelos sensibles como regresión lineal o SVM.
+	Comparar ambos preprocesamientos te permitirá decidir cuál enfoque funciona mejor.

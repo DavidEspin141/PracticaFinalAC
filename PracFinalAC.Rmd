@@ -128,8 +128,89 @@ Una vez hechos los cambios anteriores y antes de pasar a hacer un análisis mono
 ```{r}
 summary(credit)
 ```
+Como vemos, nuestros datos cuentan con NAs que habrá que solucionar para poder hacer un buen modelo a posterior.\
+Antes de tratar los NAs, debemos de tratar los datos atípicos que puedan aparecer en nuestras variables, pues por ejemplo para las numéricas estos valores atípicos influyen en la representación de su distribución y por lo tanto podríamos elegir la media para sustituir los NAs cuando quizás lo prudente sería la mediana. 
 
+```{r}
+library(gridExtra)
+library(ggplot2)
+g1<-ggplot(na.omit(credit), aes(x = "", y = V2)) + 
+  geom_boxplot() +
+  labs(y = "V2", x = "") +
+  theme_minimal()
+g2<-ggplot(na.omit(credit), aes(x = "", y = V3)) + 
+  geom_boxplot() +
+  labs(y = "V3", x = "") +
+  theme_minimal()
+g3<-ggplot(na.omit(credit), aes(x = "", y = V8)) + 
+  geom_boxplot() +
+  labs(y = "V8", x = "") +
+  theme_minimal()
+g4<-ggplot(na.omit(credit), aes(x = "", y = V11)) + 
+  geom_boxplot() +
+  labs(y = "V11", x = "") +
+  theme_minimal()
+g5<-ggplot(na.omit(credit), aes(x = "", y = V14)) + 
+  geom_boxplot() +
+  labs(y = "V14", x = "") +
+  theme_minimal()
+g6<-ggplot(na.omit(credit), aes(x = "", y = V15)) + 
+  geom_boxplot() +
+  labs(y = "V15", x = "") +
+  theme_minimal()
+grid.arrange(g1,g2,g3,g4,ncol=2)
+grid.arrange(g5,g6)
+```
+Como vemos, todas las variables numéricas cuentan con outliers. Estos valores pueden resultar o no un problema, dependiendo del modelo que se quiera idear, pues algunos como la regresión lineal tienen poca tolerancia a outliers y otros como randomForest los toleran y tratan de manera interna.\
+Es por ello por lo que esto datos atípicos se solucionarán o no a posteriori, cuando se haya elegido el modelo. 
 
+```{r}
+(credit)[!complete.cases(credit),]
+colSums(is.na(credit))
+
+```
+Con esto podemos ver, que en total contamos con 37 filas de las 690 observaciones totales que forman nuestro `data.frame` que cuentan con NAs en alguna de sus columnas (predictores). 
+Son las variables V1,V2,V4,V5,V6,V7 y V14 las que cuentan con NAs. 
+El número de NAs es bastante pequeño y muy posiblemente lo más fácil sería directamente eliminar las observaciones que cuentan con NAs de nuestras observaciones. Sin embargo, al no saber el contexto de los datos ni lo que signfica cada variable, hemos decidido hacer un tratamiento más conservador.\
+Para ello, lo que se va a hacer va a ser sustituir el valor de NA por el más conveniente según el tipo de dato y la distribución que sigue. 
+```{r}
+#Comprobación visual para determinar si los variables numéricas se ajustan a una normal
+library(ggplot2)
+library(gridExtra)
+p1 = ggplot(data=credit,aes(sample=V2)) +
+  ggtitle("QQ plot para V2") +
+  geom_qq() + 
+  stat_qq_line() + 
+  xlab("Distribución teórica") + ylab("Distribución muestral")
+p2 = ggplot(data=credit,aes(sample=V14)) +
+  ggtitle("QQ plot para V14") +
+  geom_qq() + 
+  stat_qq_line() + 
+  xlab("Distribución teórica") + ylab("Distribución muestral")
+
+grid.arrange(p1,p2,nrow=2)
+```
+
+Si analizamos la distribución que siguen las dos variables numéricas que presentan NAs, podemos ver como V2 sigue una normal que se separa un poco en los extremos. Por otro lado, V14 si que está sesgada hacia la derecha. 
+Es por ello, por lo que para estas variables se ha decidido imputar los NAs con la mediana, pues es una medida robusta a los outliers ya que la media puede estar bastante desviada debido a valores extremos altos. 
+```{r}
+credit$V2[is.na(credit$V2)] <-median(credit$V2,na.rm = TRUE)
+credit$V14[is.na(credit$V14)] <-median(credit$V14,na.rm = TRUE)
+```
+Ahora, para las variables categóricas el procedimiento que hemos decidido seguir es el de sustituir los NAs por la moda, ya que el número total de NAs en las columnas es muy pequeño y con esto conseguimos mantener la distribución que siguen. 
+```{r}
+# Función para calcular la moda
+moda <- function(x) {
+  names(which.max(table(x, useNA = "no")))  
+}
+credit$V1[is.na(credit$V1)] <- moda(credit$V1)
+credit$V4[is.na(credit$V4)] <- moda(credit$V4)
+credit$V5[is.na(credit$V5)] <- moda(credit$V5)
+credit$V6[is.na(credit$V6)] <- moda(credit$V6)
+credit$V7[is.na(credit$V7)] <- moda(credit$V7)
+summary(credit)
+```
+Con esto, hemos conseguido tratar los NAs, de manera que ahora tratar con las variables será mucho más fácil y no aparecerán warnings en gráficas.
 
 ## Análisis monovariable
 
