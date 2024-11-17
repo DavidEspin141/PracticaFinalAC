@@ -21,7 +21,6 @@ editor_options:
 Con esto comprobamos que hemos cargado de manera correcta la base de
 datos.
 
-
 ```{r}
 credit<- read.csv("credit+approval/crx.data", header=FALSE)
 credit.trainIdx<-readRDS("credit.trainIdx.rds")
@@ -95,8 +94,11 @@ levels(credit$V7)
 Con esto apreciamos de mejor forma, que las variables categóricas que
 tienen valores nulos son V1,V4,V5,V6 y V7.
 
+Como hemos analizado, nuestra base de datos cuenta con datos missing,
+por lo que sería conveniente cargarla de nuevo, pero indicándolo, para
+que así se guarden directamente como datos NA y se pueda hacer un
+tratamiento correcto de estos datos luego.
 
-Como hemos analizado, nuestra base de datos cuenta con datos missing, por lo que sería conveniente cargarla de nuevo, pero indicándolo, para que así se guarden directamente como datos NA y se pueda hacer un tratamiento correcto de estos datos luego. 
 ```{r}
 rm(list = ls())
 credit<- read.csv("credit+approval/crx.data", header=FALSE,na.strings = "?")
@@ -107,14 +109,17 @@ nrow(credit.Datos.Train)
 nrow(credit.Datos.Test)
 ```
 
-Una vez hecho esto, hay que aplicar todos los pasos anteriores para dejar las variables con su tipo correspondiente. 
+Una vez hecho esto, hay que aplicar todos los pasos anteriores para
+dejar las variables con su tipo correspondiente.
+
 ```{r}
 categoricos_col<-c("V1","V4","V5","V6","V7","V9","V10","V12","V13","V16")
 credit[categoricos_col]<-lapply(credit[categoricos_col],FUN = as.factor)
 str(credit)
 ```
 
-Además, como hemos mencionado antes, en la variable V4 vemos como no aparece el nivel "t".\
+Además, como hemos mencionado antes, en la variable V4 vemos como no
+aparece el nivel "t".\
 Esto se puede añadir facilmente de la siguiente manera:
 
 ```{r}
@@ -122,14 +127,22 @@ levels(credit$V4)<-c(levels(credit$V4),"t")
 str(credit$V4)
 ```
 
+Una vez hechos los cambios anteriores y antes de pasar a hacer un
+análisis monovariable de algunas de las variables, vamos a ver de manera
+resumida que información aporta cada variable, así como la cantidad de
+datos desconocidos que tiene.
 
-
-Una vez hechos los cambios anteriores y antes de pasar a hacer un análisis monovariable de algunas de las variables, vamos a ver de manera resumida que información aporta cada variable, así como la cantidad de datos desconocidos que tiene. 
 ```{r}
 summary(credit)
 ```
-Como vemos, nuestros datos cuentan con NAs que habrá que solucionar para poder hacer un buen modelo a posterior.\
-Antes de tratar los NAs, debemos de tratar los datos atípicos que puedan aparecer en nuestras variables, pues por ejemplo para las numéricas estos valores atípicos influyen en la representación de su distribución y por lo tanto podríamos elegir la media para sustituir los NAs cuando quizás lo prudente sería la mediana. 
+
+Como vemos, nuestros datos cuentan con NAs que habrá que solucionar para
+poder hacer un buen modelo a posterior.\
+Antes de tratar los NAs, debemos de tratar los datos atípicos que puedan
+aparecer en nuestras variables, pues por ejemplo para las numéricas
+estos valores atípicos influyen en la representación de su distribución
+y por lo tanto podríamos elegir la media para sustituir los NAs cuando
+quizás lo prudente sería la mediana.
 
 ```{r}
 library(gridExtra)
@@ -161,18 +174,33 @@ g6<-ggplot(na.omit(credit), aes(x = "", y = V15)) +
 grid.arrange(g1,g2,g3,g4,ncol=2)
 grid.arrange(g5,g6)
 ```
-Como vemos, todas las variables numéricas cuentan con outliers. Estos valores pueden resultar o no un problema, dependiendo del modelo que se quiera idear, pues algunos como la regresión lineal tienen poca tolerancia a outliers y otros como randomForest los toleran y tratan de manera interna.\
-Es por ello por lo que esto datos atípicos se solucionarán o no a posteriori, cuando se haya elegido el modelo. 
+
+Como vemos, todas las variables numéricas cuentan con outliers. Estos
+valores pueden resultar o no un problema, dependiendo del modelo que se
+quiera idear, pues algunos como la regresión lineal tienen poca
+tolerancia a outliers y otros como randomForest los toleran y tratan de
+manera interna.\
+Es por ello por lo que esto datos atípicos se solucionarán o no a
+posteriori, cuando se haya elegido el modelo.
 
 ```{r}
 (credit)[!complete.cases(credit),]
 colSums(is.na(credit))
 
 ```
-Con esto podemos ver, que en total contamos con 37 filas de las 690 observaciones totales que forman nuestro `data.frame` que cuentan con NAs en alguna de sus columnas (predictores). 
-Son las variables V1,V2,V4,V5,V6,V7 y V14 las que cuentan con NAs. 
-El número de NAs es bastante pequeño y muy posiblemente lo más fácil sería directamente eliminar las observaciones que cuentan con NAs de nuestras observaciones. Sin embargo, al no saber el contexto de los datos ni lo que signfica cada variable, hemos decidido hacer un tratamiento más conservador.\
-Para ello, lo que se va a hacer va a ser sustituir el valor de NA por el más conveniente según el tipo de dato y la distribución que sigue. 
+
+Con esto podemos ver, que en total contamos con 37 filas de las 690
+observaciones totales que forman nuestro `data.frame` que cuentan con
+NAs en alguna de sus columnas (predictores). Son las variables
+V1,V2,V4,V5,V6,V7 y V14 las que cuentan con NAs. El número de NAs es
+bastante pequeño y muy posiblemente lo más fácil sería directamente
+eliminar las observaciones que cuentan con NAs de nuestras
+observaciones. Sin embargo, al no saber el contexto de los datos ni lo
+que signfica cada variable, hemos decidido hacer un tratamiento más
+conservador.\
+Para ello, lo que se va a hacer va a ser sustituir el valor de NA por el
+más conveniente según el tipo de dato y la distribución que sigue.
+
 ```{r}
 #Comprobación visual para determinar si los variables numéricas se ajustan a una normal
 library(ggplot2)
@@ -191,13 +219,24 @@ p2 = ggplot(data=credit,aes(sample=V14)) +
 grid.arrange(p1,p2,nrow=2)
 ```
 
-Si analizamos la distribución que siguen las dos variables numéricas que presentan NAs, podemos ver como V2 sigue una normal que se separa un poco en los extremos. Por otro lado, V14 si que está sesgada hacia la derecha. 
-Es por ello, por lo que para estas variables se ha decidido imputar los NAs con la mediana, pues es una medida robusta a los outliers ya que la media puede estar bastante desviada debido a valores extremos altos. 
+Si analizamos la distribución que siguen las dos variables numéricas que
+presentan NAs, podemos ver como V2 sigue una normal que se separa un
+poco en los extremos. Por otro lado, V14 si que está sesgada hacia la
+derecha. Es por ello, por lo que para estas variables se ha decidido
+imputar los NAs con la mediana, pues es una medida robusta a los
+outliers ya que la media puede estar bastante desviada debido a valores
+extremos altos.
+
 ```{r}
 credit$V2[is.na(credit$V2)] <-median(credit$V2,na.rm = TRUE)
 credit$V14[is.na(credit$V14)] <-median(credit$V14,na.rm = TRUE)
 ```
-Ahora, para las variables categóricas el procedimiento que hemos decidido seguir es el de sustituir los NAs por la moda, ya que el número total de NAs en las columnas es muy pequeño y con esto conseguimos mantener la distribución que siguen. 
+
+Ahora, para las variables categóricas el procedimiento que hemos
+decidido seguir es el de sustituir los NAs por la moda, ya que el número
+total de NAs en las columnas es muy pequeño y con esto conseguimos
+mantener la distribución que siguen.
+
 ```{r}
 # Función para calcular la moda
 moda <- function(x) {
@@ -210,12 +249,70 @@ credit$V6[is.na(credit$V6)] <- moda(credit$V6)
 credit$V7[is.na(credit$V7)] <- moda(credit$V7)
 summary(credit)
 ```
-Con esto, hemos conseguido tratar los NAs, de manera que ahora tratar con las variables será mucho más fácil y no aparecerán warnings en gráficas.
+
+Con esto, hemos conseguido tratar los NAs, de manera que ahora tratar
+con las variables será mucho más fácil y no aparecerán warnings en
+gráficas.
 
 ## Análisis monovariable
 
-A continuación, vamos a llevar a cabo el análisis monovariable de algunas de las variables del conjunto de datos.
+A continuación, vamos a llevar a cabo el análisis monovariable de
+algunas de las variables del conjunto de datos. Para llevar a cabo esto, el estudio lo vamos a realizar en variables o predictores de distinto tipo, tanto en alguna númerica como en otra categórica.
+
+En primera instanacia, vamos a comenzar por realizar un estudio monovariable del predictor "V1", que se trata de un tipo de datos categórico como hemos visto previamente. De todas formas, vamos a volver a apreciarlo con porcentajes:
+```{r}
+porcent  <- prop.table(table(credit$V1)) * 100
+cbind(total=table(credit$V1), porcentaje=porcent)
+```
+
+En este caso, al tener un tipo de datos categórico, no nos encontramos con ningún dato fuera de rango o outlayer, ya que los datos están contenidos en el dominio de los dos niveles disponibles, "a" y "b".
+
+Al no ser de tipo númerico tampoco podemos apreciar una gráfica con la distribución de los datos y ver a que distribución se aproxima.
+
+A continuación, vamos a analizar el predictor "V2" a fondo, que al contrario que "V1", este sí que cuenta con datos númericos por lo que podemos llevar a cabo un estudio más exhaustivo. Comenzamos de igual forma que antes, apreciando un breve resuemen de la variable a investigar:
+```{r}
+summary(credit$V2)
+```
+En este resumen, apreciamos que la mediana y la media tienen valores un poco distantes, ya que el valor de la media es un mayor debido a los outlaiers por encima de la mediana que se encuentran en nuestro data frame. Debemos de recordar que la mediana es un valor mucho más robusto y menos suceptible a los outliers que la media, ya que esta última varía más ante datos atípicos.
+
+Además, en este caso podemos apreciar por medio de un histograma la distribución que sigue este predictor:
+```{r}
+#Representamos histograma
+myhist = ggplot(data=credit,aes(V2)) +
+  geom_histogram(col="orange",fill="orange",alpha=0.2,) + 
+  labs(title="Histograma V2", y="Count") 
+#Marca el valor de la media con una línea azul vertical
+myhist = myhist + geom_vline(xintercept = mean(credit$V2),
+                             col="blue")
+#Marca el valor de la mediana con una línea roja
+myhist = myhist + geom_vline(xintercept = median(credit$V2),
+                             col="red")
+myhist+geom_rug(data=credit,aes(x=V2,y=0),
+           sides="b",position="jitter")
+```
+Mediante el histograma resultante, podemos apreciar que efectivamente como hemos mencionado antes, se trata de una distribución normal, aunque esta podemos apreciar muy claramente que se encuentra sesgada a la derecha, debido a los outlyers que se encuentran entre los datos. Debido a la misma razón,ocurre lo mencionado con la media y la mediana.\
+Los datos atípicos, los identificamos mejor también gracias al comado `jitter`, que crea un poco de ruido para poder visualizar de mejor forma los valores de los datos repetidos (comprobamos que hay ciertos posibles outliers en la parte derecha del histograma).
 
 
+Por último vamos a analizar también el predictor "V3", cuyos datos también son de tipo numérico. Como siempre, empezamos viendo un pequeño resumen de los datos de la variable:
+```{r}
+summary(credit$V3)
+```
+En este caso, apreciamos que al igual que antes, la media y la mediana difieren bastante entre sí, lo que vuelve a sugerir que haya outliers entre los datos. A continuación, vamos a apreciar el histograma para corrobar esta idea:
+```{r}
+#Representamos histograma
+myhist = ggplot(data=credit,aes(V3)) +
+  geom_histogram(col="orange",fill="orange",alpha=0.2,) + 
+  labs(title="Histograma V3", y="Count") 
+#Marca el valor de la media con una línea azul vertical
+myhist = myhist + geom_vline(xintercept = mean(credit$V3),
+                             col="blue")
+#Marca el valor de la mediana con una línea roja
+myhist = myhist + geom_vline(xintercept = median(credit$V3),
+                             col="red")
+myhist+geom_rug(data=credit,aes(x=V3,y=0),
+           sides="b",position="jitter")
+```
+Gracias a `rug` de nuevo, apreciamos que también hay ciertos outliers entre los datos, además de que el histograma resultante sigue una distribución exponencial inversa, esto lo sabemos debido a la gran cola que posee el histograma.
 
 ## Análisis multivariable
