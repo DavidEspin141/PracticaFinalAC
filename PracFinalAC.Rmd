@@ -257,25 +257,47 @@ gráficas.
 ## Análisis monovariable
 
 A continuación, vamos a llevar a cabo el análisis monovariable de
-algunas de las variables del conjunto de datos. Para llevar a cabo esto, el estudio lo vamos a realizar en variables o predictores de distinto tipo, tanto en alguna númerica como en otra categórica.
+algunas de las variables del conjunto de datos. Para llevar a cabo esto,
+el estudio lo vamos a realizar en variables o predictores de distinto
+tipo, tanto en alguna númerica como en otra categórica.
 
-En primera instanacia, vamos a comenzar por realizar un estudio monovariable del predictor "V1", que se trata de un tipo de datos categórico como hemos visto previamente. De todas formas, vamos a volver a apreciarlo con porcentajes:
+En primera instanacia, vamos a comenzar por realizar un estudio
+monovariable del predictor "V1", que se trata de un tipo de datos
+categórico como hemos visto previamente. De todas formas, vamos a volver
+a apreciarlo con porcentajes:
+
 ```{r}
 porcent  <- prop.table(table(credit$V1)) * 100
 cbind(total=table(credit$V1), porcentaje=porcent)
 ```
 
-En este caso, al tener un tipo de datos categórico, no nos encontramos con ningún dato fuera de rango o outlayer, ya que los datos están contenidos en el dominio de los dos niveles disponibles, "a" y "b".
+En este caso, al tener un tipo de datos categórico, no nos encontramos
+con ningún dato fuera de rango o outlayer, ya que los datos están
+contenidos en el dominio de los dos niveles disponibles, "a" y "b".
 
-Al no ser de tipo númerico tampoco podemos apreciar una gráfica con la distribución de los datos y ver a que distribución se aproxima.
+Al no ser de tipo númerico tampoco podemos apreciar una gráfica con la
+distribución de los datos y ver a que distribución se aproxima.
 
-A continuación, vamos a analizar el predictor "V2" a fondo, que al contrario que "V1", este sí que cuenta con datos númericos por lo que podemos llevar a cabo un estudio más exhaustivo. Comenzamos de igual forma que antes, apreciando un breve resuemen de la variable a investigar:
+A continuación, vamos a analizar el predictor "V2" a fondo, que al
+contrario que "V1", este sí que cuenta con datos númericos por lo que
+podemos llevar a cabo un estudio más exhaustivo. Comenzamos de igual
+forma que antes, apreciando un breve resuemen de la variable a
+investigar:
+
 ```{r}
 summary(credit$V2)
 ```
-En este resumen, apreciamos que la mediana y la media tienen valores un poco distantes, ya que el valor de la media es un mayor debido a los outlaiers por encima de la mediana que se encuentran en nuestro data frame. Debemos de recordar que la mediana es un valor mucho más robusto y menos suceptible a los outliers que la media, ya que esta última varía más ante datos atípicos.
 
-Además, en este caso podemos apreciar por medio de un histograma la distribución que sigue este predictor:
+En este resumen, apreciamos que la mediana y la media tienen valores un
+poco distantes, ya que el valor de la media es un mayor debido a los
+outlaiers por encima de la mediana que se encuentran en nuestro data
+frame. Debemos de recordar que la mediana es un valor mucho más robusto
+y menos suceptible a los outliers que la media, ya que esta última varía
+más ante datos atípicos.
+
+Además, en este caso podemos apreciar por medio de un histograma la
+distribución que sigue este predictor:
+
 ```{r}
 #Representamos histograma
 myhist = ggplot(data=credit,aes(V2)) +
@@ -290,15 +312,30 @@ myhist = myhist + geom_vline(xintercept = median(credit$V2),
 myhist+geom_rug(data=credit,aes(x=V2,y=0),
            sides="b",position="jitter")
 ```
-Mediante el histograma resultante, podemos apreciar que efectivamente como hemos mencionado antes, se trata de una distribución normal, aunque esta podemos apreciar muy claramente que se encuentra sesgada a la derecha, debido a los outlyers que se encuentran entre los datos. Debido a la misma razón,ocurre lo mencionado con la media y la mediana.\
-Los datos atípicos, los identificamos mejor también gracias al comado `jitter`, que crea un poco de ruido para poder visualizar de mejor forma los valores de los datos repetidos (comprobamos que hay ciertos posibles outliers en la parte derecha del histograma).
 
+Mediante el histograma resultante, podemos apreciar que efectivamente
+como hemos mencionado antes, se trata de una distribución normal, aunque
+esta podemos apreciar muy claramente que se encuentra sesgada a la
+derecha, debido a los outlyers que se encuentran entre los datos. Debido
+a la misma razón,ocurre lo mencionado con la media y la mediana.\
+Los datos atípicos, los identificamos mejor también gracias al comado
+`jitter`, que crea un poco de ruido para poder visualizar de mejor forma
+los valores de los datos repetidos (comprobamos que hay ciertos posibles
+outliers en la parte derecha del histograma).
 
-Por último vamos a analizar también el predictor "V3", cuyos datos también son de tipo numérico. Como siempre, empezamos viendo un pequeño resumen de los datos de la variable:
+Por último vamos a analizar también el predictor "V3", cuyos datos
+también son de tipo numérico. Como siempre, empezamos viendo un pequeño
+resumen de los datos de la variable:
+
 ```{r}
 summary(credit$V3)
 ```
-En este caso, apreciamos que al igual que antes, la media y la mediana difieren bastante entre sí, lo que vuelve a sugerir que haya outliers entre los datos. A continuación, vamos a apreciar el histograma para corrobar esta idea:
+
+En este caso, apreciamos que al igual que antes, la media y la mediana
+difieren bastante entre sí, lo que vuelve a sugerir que haya outliers
+entre los datos. A continuación, vamos a apreciar el histograma para
+corrobar esta idea:
+
 ```{r}
 #Representamos histograma
 myhist = ggplot(data=credit,aes(V3)) +
@@ -313,20 +350,34 @@ myhist = myhist + geom_vline(xintercept = median(credit$V3),
 myhist+geom_rug(data=credit,aes(x=V3,y=0),
            sides="b",position="jitter")
 ```
-Gracias a `rug` de nuevo, apreciamos que también hay ciertos outliers entre los datos, además de que el histograma resultante sigue una distribución exponencial inversa, esto lo sabemos debido a la gran cola que posee el histograma.
+
+Gracias a `rug` de nuevo, apreciamos que también hay ciertos outliers
+entre los datos, además de que el histograma resultante sigue una
+distribución exponencial inversa, esto lo sabemos debido a la gran cola
+que posee el histograma.
 
 ## Análisis multivariable
-Por otro lado, vamos a llevar a cabo un estudio multivariable de los predictores de la base de datos. Para el este, sería muy útil hacer uso de un análisis de componentes principales, también denominado PCA, sin embargo, se sabe que este tipo de análisis es muy susceptible a los outliers, ya que se basa en la varianza, por lo que al todavía no ser tratados, el PCA es inviable. 
 
-Primero, vamos a representar una matriz de correlación mediante el comando `cor`, lo que nos va a permitir observar que tan relacionados están entre sí los diversos predictores.
+Por otro lado, vamos a llevar a cabo un estudio multivariable de los
+predictores de la base de datos. Para el este, sería muy útil hacer uso
+de un análisis de componentes principales, también denominado PCA, sin
+embargo, se sabe que este tipo de análisis es muy susceptible a los
+outliers, ya que se basa en la varianza, por lo que al todavía no ser
+tratados, el PCA es inviable.
 
-Después vamos a representar mediante el comando `pairs` de forma gráfica las relaciones entre pares de predictores. A parte, vamos a representarlo diferenciando los datos entre los diversos valores que tienen según cada predictor de tipo categórico.
+Primero, vamos a representar una matriz de correlación mediante el
+comando `cor`, lo que nos va a permitir observar que tan relacionados
+están entre sí los diversos predictores.
 
+Después vamos a representar mediante el comando `pairs` de forma gráfica
+las relaciones entre pares de predictores. A parte, vamos a
+representarlo diferenciando los datos entre los diversos valores que
+tienen según cada predictor de tipo categórico.
 
 ```{r}
 cor(credit[, c("V2", "V3", "V8", "V11", "V14", "V15")])
 pairs(credit[,c("V2","V3","V8","V11","V14","V15")],col=as.numeric(credit$V1))
-pairs(credit[,c("V2","V3","V8","V11","V14","V15")],col=as.numeric(credit$V14))
+pairs(credit[,c("V2","V3","V8","V11","V14","V15")],col=as.numeric(credit$V4))
 pairs(credit[,c("V2","V3","V8","V11","V14","V15")],col=as.numeric(credit$V5))
 pairs(credit[,c("V2","V3","V8","V11","V14","V15")],col=as.numeric(credit$V6))
 pairs(credit[,c("V2","V3","V8","V11","V14","V15")],col=as.numeric(credit$V7))
@@ -336,6 +387,15 @@ pairs(credit[,c("V2","V3","V8","V11","V14","V15")],col=as.numeric(credit$V12))
 pairs(credit[,c("V2","V3","V8","V11","V14","V15")],col=as.numeric(credit$V13))
 pairs(credit[,c("V2","V3","V8","V11","V14","V15")],col=as.numeric(credit$V16))
 ```
-Tras observar la matriz resultante, podemos observar que no hay una gran relación entre predictores aunque, entre ellos destacan la relación entre "V2"  y "V8" con un una correlación moderada de 0.39146361; la de "V8" y "V11", con otra correlación de 0.32232967; y la relación entre "V2" y "V3" de  0.20217658.
 
-De entre las gráficas, no podemos sacar ninguna relación clara entre tipos de datos, ya que los datos de los distintos niveles se encuentran muy juntos. En las gráficas podemos apreciar que, las relaciones previamente mencionadas, tienen una forma que en algunos tramos, simula una diagonal, lo que es muestra de su mayor nivel de correlación.
+Tras observar la matriz resultante, podemos observar que no hay una gran
+relación entre predictores aunque, entre ellos destacan la relación
+entre "V2" y "V8" con un una correlación moderada de 0.39146361; la de
+"V8" y "V11", con otra correlación de 0.32232967; y la relación entre
+"V2" y "V3" de 0.20217658.
+
+De entre las gráficas, no podemos sacar ninguna relación clara entre
+tipos de datos, ya que los datos de los distintos niveles se encuentran
+muy juntos. En las gráficas podemos apreciar que, las relaciones
+previamente mencionadas, tienen una forma que en algunos tramos, simula
+una diagonal, lo que es muestra de su mayor nivel de correlación.
