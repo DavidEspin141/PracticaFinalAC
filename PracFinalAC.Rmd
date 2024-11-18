@@ -316,3 +316,26 @@ myhist+geom_rug(data=credit,aes(x=V3,y=0),
 Gracias a `rug` de nuevo, apreciamos que también hay ciertos outliers entre los datos, además de que el histograma resultante sigue una distribución exponencial inversa, esto lo sabemos debido a la gran cola que posee el histograma.
 
 ## Análisis multivariable
+Por otro lado, vamos a llevar a cabo un estudio multivariable de los predictores de la base de datos. Para el este, sería muy útil hacer uso de un análisis de componentes principales, también denominado PCA, sin embargo, se sabe que este tipo de análisis es muy susceptible a los outliers, ya que se basa en la varianza, por lo que al todavía no ser tratados, el PCA es inviable. 
+
+Primero, vamos a representar una matriz de correlación mediante el comando `cor`, lo que nos va a permitir observar que tan relacionados están entre sí los diversos predictores.
+
+Después vamos a representar mediante el comando `pairs` de forma gráfica las relaciones entre pares de predictores. A parte, vamos a representarlo diferenciando los datos entre los diversos valores que tienen según cada predictor de tipo categórico.
+
+
+```{r}
+cor(credit[, c("V2", "V3", "V8", "V11", "V14", "V15")])
+pairs(credit[,c("V2","V3","V8","V11","V14","V15")],col=as.numeric(credit$V1))
+pairs(credit[,c("V2","V3","V8","V11","V14","V15")],col=as.numeric(credit$V14))
+pairs(credit[,c("V2","V3","V8","V11","V14","V15")],col=as.numeric(credit$V5))
+pairs(credit[,c("V2","V3","V8","V11","V14","V15")],col=as.numeric(credit$V6))
+pairs(credit[,c("V2","V3","V8","V11","V14","V15")],col=as.numeric(credit$V7))
+pairs(credit[,c("V2","V3","V8","V11","V14","V15")],col=as.numeric(credit$V9))
+pairs(credit[,c("V2","V3","V8","V11","V14","V15")],col=as.numeric(credit$V10))
+pairs(credit[,c("V2","V3","V8","V11","V14","V15")],col=as.numeric(credit$V12))
+pairs(credit[,c("V2","V3","V8","V11","V14","V15")],col=as.numeric(credit$V13))
+pairs(credit[,c("V2","V3","V8","V11","V14","V15")],col=as.numeric(credit$V16))
+```
+Tras observar la matriz resultante, podemos observar que no hay una gran relación entre predictores aunque, entre ellos destacan la relación entre "V2"  y "V8" con un una correlación moderada de 0.39146361; la de "V8" y "V11", con otra correlación de 0.32232967; y la relación entre "V2" y "V3" de  0.20217658.
+
+De entre las gráficas, no podemos sacar ninguna relación clara entre tipos de datos, ya que los datos de los distintos niveles se encuentran muy juntos. En las gráficas podemos apreciar que, las relaciones previamente mencionadas, tienen una forma que en algunos tramos, simula una diagonal, lo que es muestra de su mayor nivel de correlación.
