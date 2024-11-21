@@ -289,8 +289,8 @@ summary(credit$V2)
 ```
 
 En este resumen, apreciamos que la mediana y la media tienen valores un
-poco distantes, ya que el valor de la media es un mayor debido a los
-outlaiers por encima de la mediana que se encuentran en nuestro data
+poco distantes, ya que el valor de la media es mayor debido a los
+outliers por encima de la mediana que se encuentran en nuestro data
 frame. Debemos de recordar que la mediana es un valor mucho más robusto
 y menos suceptible a los outliers que la media, ya que esta última varía
 más ante datos atípicos.
@@ -399,3 +399,34 @@ tipos de datos, ya que los datos de los distintos niveles se encuentran
 muy juntos. En las gráficas podemos apreciar que, las relaciones
 previamente mencionadas, tienen una forma que en algunos tramos, simula
 una diagonal, lo que es muestra de su mayor nivel de correlación.
+
+
+## Seccion 2
+
+En esta sección vamos a entrenar el modelo con los datos dados, para ello
+lo primero que debemos hacer es elegir las técnicas de entrenamiento según
+las ofrecidas por caret.
+
+En nuestro caso hemos elegido usar rpart (árboles de decisión) como técnica
+de tipo sencillo, y svmRadial (Support Vector Machine), gbm (Gradient 
+Boosting Machine) y rf (Bosques Aleatorios) como técnicas complejas.
+
+Antes de comenzar a entrenar tenemos que separar los predictores de la 
+variable objetivo.
+
+```{r}
+credit.varSalida = c("V16")
+credit.varsEntrada = setdiff(names(credit), credit.varSalida)
+```
+
+Para empezar, entrenaremos el modelo con rpart, vemos que no es necesario
+ningún preprocesamiento especial ya que tolera las variables categóricas
+y no le influye la escala.
+
+```{r}
+credit.modelo.rpart = train(credit.Datos.Train[credit.varsEntrada],
+                            credit.Datos.Train[[credit.varSalida]],
+                            method='rpart')
+credit.modelo.rpart
+```
+Ahora ajustaré eso 
