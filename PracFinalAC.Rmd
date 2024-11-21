@@ -419,14 +419,37 @@ credit.varSalida = c("V16")
 credit.varsEntrada = setdiff(names(credit), credit.varSalida)
 ```
 
-Para empezar, entrenaremos el modelo con rpart, vemos que no es necesario
-ningún preprocesamiento especial ya que tolera las variables categóricas
-y no le influye la escala.
+Para empezar, entrenaremos el modelo con rpart, ya que es una técnica rápida,
+fácil de interpretar, eficaz y que trabaja con datos categóricos y numéricos,
+lo que simplifica el preprocesamiento de estos.
+
+Vemos que se necesita un preprocesamiento especial en las variables categóricas,
+ya que deben tener todas los mismos niveles definidos.
 
 ```{r}
+for(cat in categoricos_col){
+  credit.Datos.Train[[cat]] = factor(
+    credit.Datos.Train[[cat]],
+    levels = unique(credit.Datos.Train[[cat()]])
+  )
+}
 credit.modelo.rpart = train(credit.Datos.Train[credit.varsEntrada],
                             credit.Datos.Train[[credit.varSalida]],
                             method='rpart')
 credit.modelo.rpart
+MLmetrics::Accuracy(predict(credit.modelo.rpart,
+                            credit.Datos.Train[credit.varsEntrada]),
+                    credit.Datos.Train[[credit.varSalida]])
 ```
-Ahora ajustaré eso 
+
+Con este entrenamiento podemos ver que, al estudiar la exactitud (Accuracy)
+con el último comando ejecutado, nos da un resultado superior al 85%.
+
+Este resultado es satisfactorio ya que significa que nuestro modelo predijo
+correctamente la gran mayoría de las instancias de datos probadas en 
+el entrenamiento.
+
+Ahora aqui van vuestros 2 modelos supongo 
+
+Para finalizar, vamos a entrenar el modelo usando rf (Random Forest)
+
