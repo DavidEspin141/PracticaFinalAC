@@ -1,0 +1,177 @@
+---
+title: "Modelo_gbm"
+output: html_document
+date: "2024-11-23"
+---
+
+Cargar base de datos para poder hacer pruebas.
+```{r}
+rm(list = ls())
+credit<- read.csv("credit+approval/crx.data", header=FALSE,na.strings = "?")
+credit.trainIdx<-readRDS("credit.trainIdx.rds")
+categoricos_col<-c("V1","V4","V5","V6","V7","V9","V10","V12","V13","V16")
+credit[categoricos_col]<-lapply(credit[categoricos_col],FUN = as.factor)
+levels(credit$V4)<-c(levels(credit$V4),"t")
+credit.Datos.Train<-credit[credit.trainIdx,]
+credit.Datos.Test<-credit[-credit.trainIdx,]
+nrow(credit.Datos.Train)
+nrow(credit.Datos.Test)
+
+```
+
+
+
+Uno de los modelos complejos que vamos a usar en esta práctica es GBM (Stochastic Gradient Boosting).\
+
+
+Antes de usar el modelo gbm es importante entender a este. Si hacemos uso de `modelLookup()` podemos ver los hiper-parámetros con los que trabaja este modelo.
+```{r}
+library(caret)
+modelLookup(("gbm"))
+```
+1. El hiper-parámetro **n.trees** controla cuántos árboles se entrenan. Más árboles suelen mejorar el ajuste, pero un exceso puede llevar al sobreajuste. (valor por defecto es 100).\ 
+2. El hiper-parámetro **interaction.depth** Determina la complejidad de los árboles.  (valor 1= additive model; valor 2= 2way-directiones).\ 
+3. El hiper-parámetro **shrinkage** Controla cuánto contribuye cada árbol al modelo. Valores más bajos requieren más árboles para un buen ajuste. (valor por defecto es 0.1).\ 
+4. Finalmente, el hiper-parámetro **n.minobsinnode** Establece el tamaño mínimo de las hojas. Valores altos simplifican el modelo. (número real de observaciones, no el peso total).\ 
+Destacar que el modelo `gbm`tiene más hiper-parámetros que los `caret`pone a nuestra disposición.\ 
+
+Una de las ventajas de `gbm`es que es un modelo capaz de tratar con variables numéricas y categóricas.
+
+Una vez hecho este análisis previo, ahora debemos de ajustar los datos de la mejor manera para que este modelo trabaje de manera eficiente.\ 
+
+`gbm`es un modelo que no maneja directamente los datos faltantes, por lo que hay que tratarlos antes de hacer un entrenamiento del modelo.
+
+Para tratar los datos nulos, se ha decidido sustituir estos valores faltantes, pues no sabemos lo que signfican las variables, por lo que eliminar las observaciones que contienen NAs no parece la mejor opción. 
+
+Para el caso de las variables numéricas, primero hay que ver que tipo de distribución siguen, pues para hacer imputación de datos por media o mediana hay que ver si los valores siguen una distribución normal.
+```{r}
+#Comprobación visual para determinar si los variables numéricas se ajustan a una normal
+library(ggplot2)
+library(gridExtra)
+p1 = ggplot(data=credit,aes(sample=V2)) +
+  ggtitle("QQ plot para V2") +
+  geom_qq() + 
+  stat_qq_line() + 
+  xlab("Distribución teórica") + ylab("Distribución muestral")
+p2 = ggplot(data=credit,aes(sample=V14)) +
+  ggtitle("QQ plot para V14") +
+  geom_qq() + 
+  stat_qq_line() + 
+  xlab("Distribución teórica") + ylab("Distribución muestral")
+
+grid.arrange(p1,p2,nrow=2)
+```
+
+Si analizamos la distribución que siguen las dos variables numéricas que
+presentan NAs, podemos ver como V2 sigue una normal que se separa un
+poco en los extremos. Por otro lado, V14 si que está sesgada hacia la
+derecha. Es por ello, por lo que para estas variables se ha decidido
+imputar los NAs con la mediana, pues es una medida robusta a los
+outliers ya que la media puede estar bastante desviada debido a valores
+extremos altos.\ 
+```{r}
+credit$V2[is.na(credit$V2)] <-median(credit$V2,na.rm = TRUE)
+credit$V14[is.na(credit$V14)] <-median(credit$V14,na.rm = TRUE)
+```
+
+Para las variables categóricas, la decisión que se ha elegido es la de sustituir los valores NAs por la moda, ya que el número
+total de NAs en las columnas es muy pequeño y con esto conseguimos
+mantener la distribución que siguen.\ 
+```{r}
+# Función para calcular la moda
+moda <- function(x) {
+  names(which.max(table(x, useNA = "no")))  
+}
+credit$V1[is.na(credit$V1)] <- moda(credit$V1)
+credit$V4[is.na(credit$V4)] <- moda(credit$V4)
+credit$V5[is.na(credit$V5)] <- moda(credit$V5)
+credit$V6[is.na(credit$V6)] <- moda(credit$V6)
+credit$V7[is.na(credit$V7)] <- moda(credit$V7)
+```
+
+
+Lo primero que se debe de hacer antes de entrenar el modelo es separar la variable de salida de los predictores.\ 
+# Entrenamiento de modelo sin tratamiento de datos 
+```{r}
+credit.varSalida = c("V16")
+credit.varsEntrada = setdiff(names(credit), credit.varSalida)
+library(gbm)
+
+
+set.seed(1234)
+modeloSinTratarDatos <- train(
+              x = credit.Datos.Train[credit.varsEntrada],
+              y = credit.Datos.Train[[credit.varSalida]],
+              method = "gbm",
+              trControl = trainControl(method = "cv", number = 5),
+              verbose = FALSE              
+)
+modeloSinTratarDatos
+```
+
+# Entrenamiento bgm tratando atípicos 
+```{r}
+eliminar_outliers <- function(df, cols) {
+  # Iniciar vector lógico para mantener filas válidas
+  rows_to_keep <- rep(TRUE, nrow(df))
+  
+  for (col in cols) {
+    Q1 <- quantile(df[[col]], 0.25, na.rm = TRUE)  # Primer cuartil
+    Q3 <- quantile(df[[col]], 0.75, na.rm = TRUE)  # Tercer cuartil
+    IQR_val <- Q3 - Q1                             # Rango intercuartílico
+    
+    # Límites superior e inferior
+    lower_bound <- Q1 - 1.5 * IQR_val
+    upper_bound <- Q3 + 1.5 * IQR_val
+    
+    # Identificar filas con valores dentro de los límites
+    rows_to_keep <- rows_to_keep & (df[[col]] >= lower_bound & df[[col]] <= upper_bound)
+  }
+  
+  # Filtrar filas válidas y eliminar filas con valores NA
+  return(na.omit(df[rows_to_keep, ]))
+}
+
+
+
+
+
+# Identificar columnas numéricas
+numeric_cols <- credit.varsEntrada[sapply(credit.Datos.Train[credit.varsEntrada], is.numeric)]
+
+# Eliminar filas con outliers del conjunto de entrenamiento
+credit.Datos.Train_Tratar <- eliminar_outliers(credit.Datos.Train, numeric_cols)
+
+
+# Entrenar modelo
+set.seed(1234)
+modeloTratarDatos <- train(
+              x = credit.Datos.Train_Tratar[credit.varsEntrada],
+              y = credit.Datos.Train_Tratar[[credit.varSalida]],
+              method = "gbm",
+              trControl = trainControl(method = "cv", number = 5),
+              verbose = FALSE              
+)
+modeloTratarDatos
+```
+# Comparación de ambos
+```{r}
+# Predicciones para el modelo sin tratar
+pred_SinTratar <- predict(modeloSinTratarDatos, newdata = credit.Datos.Test[credit.varsEntrada])
+
+# Evaluar desempeño en el conjunto de prueba
+confMatrix_SinTratar <- confusionMatrix(pred_SinTratar, credit.Datos.Test[[credit.varSalida]])
+
+# Mostrar resultados
+print(confMatrix_SinTratar)
+# Predicciones para el modelo con tratamiento de outliers
+pred_Tratar <- predict(modeloTratarDatos, newdata = credit.Datos.Test[credit.varsEntrada])
+
+# Evaluar desempeño en el conjunto de prueba
+confMatrix_Tratar <- confusionMatrix(pred_Tratar, credit.Datos.Test[[credit.varSalida]])
+
+# Mostrar resultados
+print(confMatrix_Tratar)
+
+```
+
