@@ -430,7 +430,11 @@ ya que deben tener todas los mismos niveles definidos.
 for(cat in categoricos_col){
   credit.Datos.Train[[cat]] = factor(
     credit.Datos.Train[[cat]],
-    levels = unique(credit.Datos.Train[[cat()]])
+    levels = unique(credit.Datos.Train[[cat]])
+  )
+  credit.Datos.Test[[cat]] = factor(
+    credit.Datos.Test[[cat]],
+    levels = unique(credit.Datos.Test[[cat]])
   )
 }
 credit.modelo.rpart = train(credit.Datos.Train[credit.varsEntrada],
@@ -440,14 +444,40 @@ credit.modelo.rpart
 MLmetrics::Accuracy(predict(credit.modelo.rpart,
                             credit.Datos.Train[credit.varsEntrada]),
                     credit.Datos.Train[[credit.varSalida]])
+
+credit.modelo.rpart.Test = train(credit.Datos.Test[credit.varsEntrada],
+                            credit.Datos.Test[[credit.varSalida]],
+                            method='rpart')
+credit.modelo.rpart.Test
+MLmetrics::Accuracy(predict(credit.modelo.rpart.Test,
+                            credit.Datos.Test[credit.varsEntrada]),
+                    credit.Datos.Test[[credit.varSalida]])
 ```
 
 Con este entrenamiento podemos ver que, al estudiar la exactitud (Accuracy)
-con el último comando ejecutado, nos da un resultado superior al 85%.
+con el último comando ejecutado, nos da un resultado superior al 85% en los 
+casos de entrenamiento, pero en los de prueba (test) nos da una exactitud
+menor, así que vamos a hacer un ajuste de hiperparámetros para mejorar la 
+eficiencia de nuestro predictor, en específico, vamos a trabajar con el 
+hiperparámetro cp (complexity parameter).
+
+Para ajustar este hiperparámetro cambiaremos sus valores y haremos pruebas
+hasta dar con el resultado que más eficiencia nos proporcione.
+
+Primero tenemos que hacer un control de entrenamiento basado en el visto en 
+los laboratorios de prácticas.
+
+```{r}
+control = trainControl(method = "cv", number = 10)
+```
 
 Este resultado es satisfactorio ya que significa que nuestro modelo predijo
 correctamente la gran mayoría de las instancias de datos probadas en 
 el entrenamiento.
+
+
+
+
 
 Ahora aqui van vuestros 2 modelos supongo 
 
