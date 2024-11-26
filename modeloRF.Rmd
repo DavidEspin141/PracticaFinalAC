@@ -45,35 +45,105 @@ credit.Datos.Train <- na.omit(credit.Datos.Train)
 library(randomForest)
 
 library(caret)
-
-# Intentar con un valor fijo de mtry
+###################################
 set.seed(1234)
+rf.tunegrid <- expand.grid(mtry = 1:15)
+
 modeloSinTratarDatosV1<- train(
   x = credit.Datos.Train[credit.varsEntrada],
   y = credit.Datos.Train[[credit.varSalida]],
   method = "rf",
   trControl = trainControl(method = "cv", number = 5),
+  tuneGrid=rf.tunegrid,
+  importance=TRUE,
   verbose = FALSE
 )
+####################################
+# Obtener la importancia de los predictores
+imp <- varImp(modeloSinTratarDatosV1, scale = FALSE)
+
+# Ver la importancia de los predictores
+print(imp)
+
+# Graficar la importancia de los predictores
+plot(imp)
+
+
+# Intentar con un valor fijo de mtry
 set.seed(1234)
-modeloSinTratarDatosV2 <- train(
+modeloSinTratarDatosV2<- train(
   x = credit.Datos.Train[credit.varsEntrada],
   y = credit.Datos.Train[[credit.varSalida]],
   method = "rf",
   trControl = trainControl(method = "cv", number = 5),
-  tuneGrid = expand.grid(mtry = 1),  # Ajustar mtry manualmente
+  importance=TRUE,
   verbose = FALSE
 )
+
+# Obtener la importancia de los predictores
+imp <- varImp(modeloSinTratarDatosV2, scale = FALSE)
+
+# Ver la importancia de los predictores
+print(imp)
+
+# Graficar la importancia de los predictores
+plot(imp)
+
+
+set.seed(1234)
+modeloSinTratarDatosV3 <- train(
+  x = credit.Datos.Train[credit.varsEntrada],
+  y = credit.Datos.Train[[credit.varSalida]],
+  method = "rf",
+  trControl = trainControl(method = "cv", number = 5),
+  tuneGrid = expand.grid(mtry = 1),
+  importance=TRUE,
+  verbose = FALSE
+)
+
+# Obtener la importancia de los predictores
+imp <- varImp(modeloSinTratarDatosV3, scale = FALSE)
+
+# Ver la importancia de los predictores
+print(imp)
+
+# Graficar la importancia de los predictores
+plot(imp)
+
+
+
+set.seed(1234)
+modeloSinTratarDatosV4 <- train(
+  x = credit.Datos.Train[credit.varsEntrada],
+  y = credit.Datos.Train[[credit.varSalida]],
+  method = "rf",
+  trControl = trainControl(method = "cv", number = 5),
+  tuneGrid = expand.grid(mtry = 11), 
+  importance=TRUE,
+  verbose = FALSE
+)
+
+# Obtener la importancia de los predictores
+imp <- varImp(modeloSinTratarDatosV4, scale = FALSE)
+
+# Ver la importancia de los predictores
+print(imp)
+
+# Graficar la importancia de los predictores
+plot(imp)
+
 
 # Ver el modelo entrenado
 print(modeloSinTratarDatosV1)
 print(modeloSinTratarDatosV2)
+print(modeloSinTratarDatosV3)
+print(modeloSinTratarDatosV4)
 
 ```
 
 Hemos llevado a cabo dos pruebas, la primera, "modeloSinTratarDatosV1" no fijando un valor del hiperparámetro de "mtry", para que caret de forma interna optimice este valor para obtener el modelo con un mayor rendimiento y la segunda, "modeloSinTratarDatosV2" fijando de forma manual el valor de "mtry" a 1.
 
-De esta manera, podemos apreciar que obtenemos un rendimiento bastante decente al ejecutar ambas pruebas, ya que obtenemos una fiabilidad del 88% en la primera versión (observando que los valores óptimos para "mtry" son de 2,8 y 15 en ese orden) y del 86% en laa segunda prueba, proporción bastante buena. Podemos apreciar lo previamente dicho, pese a no tener un tratamiento previo de los datos atípicos, obtenemos un buen rendimiento.
+De esta manera, podemos apreciar que obtenemos un rendimiento bastante decente al ejecutar ambas pruebas, ya que obtenemos una fiabilidad del 88% en la primera versión (observando que los valores óptimos para "mtry" son de 2,8 y 15 en ese orden, aunque finalmente se evalúa 15 como el valor óptimo y final enmpleado) y del 86% en la segunda prueba, proporción bastante buena. Podemos apreciar lo previamente dicho, pese a no tener un tratamiento previo de los datos atípicos, obtenemos un buen rendimiento.
 
 Ahora, vamos a llevar a cabo otro nuevo modelo de random forest, aunque en este caso, vamos a hacer un tratamiento previo de los NAs distinto, en este caso en vez de borrarlos, vamos a en el caso de los datos numéricos imputarlos con la mediana, ya que es un valor robusto frente a outliers (aunque podríamos hacer uso también de la media debido a la gran robustez de random forest), y en el caso de los predictores categóricos imputarlos con la moda.
 
@@ -146,23 +216,35 @@ set.seed(1234)
 pred_SinTratarV2 <- predict(modeloSinTratarDatosV2, newdata = credit.Datos.Test[credit.varsEntrada])
 print(pred_SinTratarV2)
 
+set.seed(1234)
+pred_SinTratarV3 <- predict(modeloSinTratarDatosV3, newdata = credit.Datos.Test[credit.varsEntrada])
+print(pred_SinTratarV3)
+
+set.seed(1234)
+pred_SinTratarV4 <- predict(modeloSinTratarDatosV4, newdata = credit.Datos.Test[credit.varsEntrada])
+print(pred_SinTratarV4)
+
 # Evaluar desempeño en el conjunto de prueba
 confMatrix_SinTratar1 <- confusionMatrix(pred_SinTratarV1, credit.Datos.Test[[credit.varSalida]])
 confMatrix_SinTratar2 <- confusionMatrix(pred_SinTratarV2, credit.Datos.Test[[credit.varSalida]])
+confMatrix_SinTratar3 <- confusionMatrix(pred_SinTratarV3, credit.Datos.Test[[credit.varSalida]])
+confMatrix_SinTratar4 <- confusionMatrix(pred_SinTratarV4, credit.Datos.Test[[credit.varSalida]])
 
 
 # Predicciones para el modelo con tratamiento
-set.seed(1234)
-pred_Tratar <- predict(modeloTratarDatos, newdata = credit.Datos.Test[credit.varsEntrada])
-print(pred_Tratar)
+#set.seed(1234)
+#pred_Tratar <- predict(modeloTratarDatos, newdata = credit.Datos.Test[credit.varsEntrada])
+#print(pred_Tratar)
 
 # Evaluar desempeño en el conjunto de prueba
-confMatrix_Tratar <- confusionMatrix(pred_Tratar, credit.Datos.Test[[credit.varSalida]])
+#confMatrix_Tratar <- confusionMatrix(pred_Tratar, credit.Datos.Test[[credit.varSalida]])
 
 # Mostrar resultados
 print(confMatrix_SinTratar1)
 print(confMatrix_SinTratar2)
-print(confMatrix_Tratar)
+print(confMatrix_SinTratar3)
+print(confMatrix_SinTratar4)
+#print(confMatrix_Tratar)
 
 ```
 
