@@ -5,7 +5,6 @@ date: "2024-11-23"
 ---
 
 Cargar base de datos para poder hacer pruebas.
-
 ```{r}
 rm(list = ls())
 credit<- read.csv("credit+approval/crx.data", header=FALSE,na.strings = "?")
@@ -20,30 +19,31 @@ nrow(credit.Datos.Test)
 
 ```
 
+
+
 Uno de los modelos complejos que vamos a usar en esta práctica es GBM (Stochastic Gradient Boosting).\
 
-Antes de usar el modelo gbm es importante entender a este. Si hacemos uso de `modelLookup()` podemos ver los hiper-parámetros con los que trabaja este modelo.
 
+Antes de usar el modelo gbm es importante entender a este. Si hacemos uso de `modelLookup()` podemos ver los hiper-parámetros con los que trabaja este modelo.
 ```{r}
 library(caret)
 modelLookup(("gbm"))
 ```
-
-1.  El hiper-parámetro **n.trees** controla cuántos árboles se entrenan. Más árboles suelen mejorar el ajuste, pero un exceso puede llevar al sobreajuste. (valor por defecto es 100). 
-2.  El hiper-parámetro **interaction.depth** Determina la complejidad de los árboles. (valor 1= additive model; valor 2= 2way-directiones). 
-3.  El hiper-parámetro **shrinkage** Controla cuánto contribuye cada árbol al modelo. Valores más bajos requieren más árboles para un buen ajuste. (valor por defecto es 0.1). 
-4.  Finalmente, el hiper-parámetro **n.minobsinnode** Establece el tamaño mínimo de las hojas. Valores altos simplifican el modelo. (número real de observaciones, no el peso total).  Destacar que el modelo `gbm`tiene más hiper-parámetros que los `caret`pone a nuestra disposición. 
+1. El hiper-parámetro **n.trees** controla cuántos árboles se entrenan. Más árboles suelen mejorar el ajuste, pero un exceso puede llevar al sobreajuste. (valor por defecto es 100).\ 
+2. El hiper-parámetro **interaction.depth** Determina la complejidad de los árboles.  (valor 1= additive model; valor 2= 2way-directiones).\ 
+3. El hiper-parámetro **shrinkage** Controla cuánto contribuye cada árbol al modelo. Valores más bajos requieren más árboles para un buen ajuste. (valor por defecto es 0.1).\ 
+4. Finalmente, el hiper-parámetro **n.minobsinnode** Establece el tamaño mínimo de las hojas. Valores altos simplifican el modelo. (número real de observaciones, no el peso total).\ 
+Destacar que el modelo `gbm`tiene más hiper-parámetros que los `caret`pone a nuestra disposición.\ 
 
 Una de las ventajas de `gbm`es que es un modelo capaz de tratar con variables numéricas y categóricas.
 
-Una vez hecho este análisis previo, ahora debemos de ajustar los datos de la mejor manera para que este modelo trabaje de manera eficiente. 
+Una vez hecho este análisis previo, ahora debemos de ajustar los datos de la mejor manera para que este modelo trabaje de manera eficiente.\ 
 
 `gbm`es un modelo que no maneja directamente los datos faltantes, por lo que hay que tratarlos antes de hacer un entrenamiento del modelo.
 
-Para tratar los datos nulos, se ha decidido sustituir estos valores faltantes, pues no sabemos lo que signfican las variables, por lo que eliminar las observaciones que contienen NAs no parece la mejor opción.
+Para tratar los datos nulos, se ha decidido sustituir estos valores faltantes, pues no sabemos lo que signfican las variables, por lo que eliminar las observaciones que contienen NAs no parece la mejor opción. 
 
 Para el caso de las variables numéricas, primero hay que ver que tipo de distribución siguen, pues para hacer imputación de datos por media o mediana hay que ver si los valores siguen una distribución normal.
-
 ```{r}
 #Comprobación visual para determinar si los variables numéricas se ajustan a una normal
 library(ggplot2)
@@ -62,30 +62,45 @@ p2 = ggplot(data=credit,aes(sample=V14)) +
 grid.arrange(p1,p2,nrow=2)
 ```
 
-Si analizamos la distribución que siguen las dos variables numéricas que presentan NAs, podemos ver como V2 sigue una normal que se separa un poco en los extremos. Por otro lado, V14 si que está sesgada hacia la derecha. Es por ello, por lo que para estas variables se ha decidido imputar los NAs con la mediana, pues es una medida robusta a los outliers ya que la media puede estar bastante desviada debido a valores extremos altos. 
-
+Si analizamos la distribución que siguen las dos variables numéricas que
+presentan NAs, podemos ver como V2 sigue una normal que se separa un
+poco en los extremos. Por otro lado, V14 si que está sesgada hacia la
+derecha. Es por ello, por lo que para estas variables se ha decidido
+imputar los NAs con la mediana, pues es una medida robusta a los
+outliers ya que la media puede estar bastante desviada debido a valores
+extremos altos.\ 
 ```{r}
-credit$V2[is.na(credit$V2)] <-median(credit$V2,na.rm = TRUE)
-credit$V14[is.na(credit$V14)] <-median(credit$V14,na.rm = TRUE)
+credit.Datos.Train$V2[is.na(credit.Datos.Train$V2)] <-
+  median(credit.Datos.Train$V2,na.rm = TRUE)
+credit.Datos.Train$V14[is.na(credit.Datos.Train$V14)] <-
+  median(credit.Datos.Train$V14,na.rm = TRUE)
 ```
 
-Para las variables categóricas, la decisión que se ha elegido es la de sustituir los valores NAs por la moda, ya que el número total de NAs en las columnas es muy pequeño y con esto conseguimos mantener la distribución que siguen. 
-
+Para las variables categóricas, la decisión que se ha elegido es la de sustituir los valores NAs por la moda, ya que el número
+total de NAs en las columnas es muy pequeño y con esto conseguimos
+mantener la distribución que siguen.\ 
 ```{r}
 # Función para calcular la moda
 moda <- function(x) {
   names(which.max(table(x, useNA = "no")))  
 }
-credit$V1[is.na(credit$V1)] <- moda(credit$V1)
-credit$V4[is.na(credit$V4)] <- moda(credit$V4)
-credit$V5[is.na(credit$V5)] <- moda(credit$V5)
-credit$V6[is.na(credit$V6)] <- moda(credit$V6)
-credit$V7[is.na(credit$V7)] <- moda(credit$V7)
+credit.Datos.Train$V1[is.na(credit.Datos.Train$V1)] <- 
+  moda(credit.Datos.Train$V1)
+credit.Datos.Train$V4[is.na(credit.Datos.Train$V4)] <- 
+  moda(credit.Datos.Train$V4)
+credit.Datos.Train$V5[is.na(credit.Datos.Train$V5)] <- 
+  moda(credit.Datos.Train$V5)
+credit.Datos.Train$V6[is.na(credit.Datos.Train$V6)] <- 
+  moda(credit.Datos.Train$V6)
+credit.Datos.Train$V7[is.na(credit.Datos.Train$V7)] <- 
+  moda(credit.Datos.Train$V7)
 ```
 
-Lo primero que se debe de hacer antes de entrenar el modelo es separar la variable de salida de los predictores.  \# Entrenamiento de modelo sin tratamiento de datos
 
+Lo primero que se debe de hacer antes de entrenar el modelo es separar la variable de salida de los predictores.\ 
+# Entrenamiento de modelo sin tratamiento de datos 
 ```{r}
+library(caret)
 credit.varSalida = c("V16")
 credit.varsEntrada = setdiff(names(credit), credit.varSalida)
 library(gbm)
@@ -102,8 +117,7 @@ modeloSinTratarDatos <- train(
 modeloSinTratarDatos
 ```
 
-# Entrenamiento bgm tratando atípicos
-
+# Entrenamiento bgm tratando atípicos 
 ```{r}
 eliminar_outliers <- function(df, cols) {
   # Iniciar vector lógico para mantener filas válidas
@@ -147,10 +161,9 @@ modeloTratarDatos <- train(
               verbose = FALSE              
 )
 modeloTratarDatos
+
 ```
-
 # Comparación de ambos
-
 ```{r}
 # Predicciones para el modelo sin tratar
 pred_SinTratar <- predict(modeloSinTratarDatos, newdata = credit.Datos.Test[credit.varsEntrada])
@@ -170,3 +183,55 @@ confMatrix_Tratar <- confusionMatrix(pred_Tratar, credit.Datos.Test[[credit.varS
 print(confMatrix_Tratar)
 
 ```
+
+# Preprocesado de datos de otra forma
+Buscar mejores hiper-parámetros
+
+```{r}
+tuneGridBuscar = expand.grid(
+  n.trees = seq(100, 1000, by = 100),  # Número de árboles
+  interaction.depth = c(1, 3, 5),      # Profundidad del árbol
+  shrinkage = c(0.01, 0.1, 0.2),       # Tasa de aprendizaje
+  n.minobsinnode = c(10, 20, 30)       # Tamaño mínimo del nodo
+)
+set.seed(1234)
+modeloBuscarHiper <- train(
+              x = credit.Datos.Train_Tratar[credit.varsEntrada],
+              y = credit.Datos.Train_Tratar[[credit.varSalida]],
+              method = "gbm",
+              trControl = trainControl(method = "cv", number = 5),
+              tuneGrid = tuneGridBuscar,
+              verbose = FALSE              
+)
+modeloBuscarHiper
+```
+
+```{r}
+tuneGridMejoresHiper <- expand.grid(
+  n.trees = 200,
+  interaction.depth = 1,
+  shrinkage = 0.1,
+  n.minobsinnode = 30
+)
+
+set.seed(1234)
+modeloHiper <- train(
+              x = credit.Datos.Train_Tratar[credit.varsEntrada],
+              y = credit.Datos.Train_Tratar[[credit.varSalida]],
+              method = "gbm",
+              trControl = trainControl(method = "cv", number = 5),
+              tuneGrid = tuneGridMejoresHiper,
+              verbose = FALSE              
+)
+modeloHiper
+# Predicciones para el modelo sin tratar
+predHiper <- predict(modeloHiper, newdata = credit.Datos.Test[credit.varsEntrada])
+
+# Evaluar desempeño en el conjunto de prueba
+confMatrixHiper <- confusionMatrix(predHiper, credit.Datos.Test[[credit.varSalida]])
+
+# Mostrar resultados
+print(confMatrixHiper)
+
+```
+
