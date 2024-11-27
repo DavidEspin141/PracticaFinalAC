@@ -276,10 +276,8 @@ print(imp)
 # Graficar la importancia de los predictores
 plot(imp)
 
-print(modeloTratarDatos)
+print(modeloTratarDatosV1)
 
-# Ver el modelo entrenado
-print(modeloTratarDatos)
 
 #eliminamos V12 dado a su importancia negativa
 credit_mod2=credit[,!(colnames(credit) %in% c("V12"))]
@@ -303,10 +301,8 @@ print(imp)
 # Graficar la importancia de los predictores
 plot(imp)
 
-print(modeloTratarDatos)
+print(modeloTratarDatosV2)
 
-# Ver el modelo entrenado
-print(modeloTratarDatos)
 
 ```
 
@@ -315,55 +311,63 @@ A continuación, vamos a observar el rendimiento que obtendríamos al ejecutar l
 ```{r}
 #Nota: hay que cargar los datos de forma correcta
 # Predicciones para el modelos sin tratamiento
-set.seed(1234)
-pred_SinTratarV1 <- predict(modeloSinTratarDatosV1, newdata = credit.Datos.Test[credit.varsEntrada])
-print(pred_SinTratarV1)
+#set.seed(1234)
+#pred_SinTratarV1 <- predict(modeloSinTratarDatosV1, newdata = credit.Datos.Test[credit.varsEntrada])
+#print(pred_SinTratarV1)
 
-set.seed(1234)
-pred_SinTratarV2 <- predict(modeloSinTratarDatosV2, newdata = credit.Datos.Test[credit.varsEntrada])
-print(pred_SinTratarV2)
+#set.seed(1234)
+#pred_SinTratarV2 <- predict(modeloSinTratarDatosV2, newdata = credit.Datos.Test[credit.varsEntrada])
+#print(pred_SinTratarV2)
 
-set.seed(1234)
-pred_SinTratarV3 <- predict(modeloSinTratarDatosV3, newdata = credit.Datos.Test[credit.varsEntrada])
-print(pred_SinTratarV3)
+#set.seed(1234)
+#pred_SinTratarV3 <- predict(modeloSinTratarDatosV3, newdata = credit.Datos.Test[credit.varsEntrada])
+#print(pred_SinTratarV3)
 
-set.seed(1234)
-pred_SinTratarV4 <- predict(modeloSinTratarDatosV4, newdata = credit.Datos.Test[credit.varsEntrada])
-print(pred_SinTratarV4)
+#set.seed(1234)
+#pred_SinTratarV4 <- predict(modeloSinTratarDatosV4, newdata = credit.Datos.Test[credit.varsEntrada])
+#print(pred_SinTratarV4)
 
-set.seed(1234)
-pred_SinTratarV5<- predict(modeloSinTratarDatosV5, newdata = credit.Datos.Test[credit.varsEntrada])
-print(pred_SinTratarV5)
+#set.seed(1234)
+#pred_SinTratarV5<- predict(modeloSinTratarDatosV5, newdata = credit.Datos.Test[credit.varsEntrada])
+#print(pred_SinTratarV5)
 
-set.seed(1234)
-pred_SinTratarV6<- predict(modeloSinTratarDatosV6, newdata = credit.Datos.Test[credit.varsEntrada])
-print(pred_SinTratarV6)
+#set.seed(1234)
+#pred_SinTratarV6<- predict(modeloSinTratarDatosV6, newdata = credit.Datos.Test[credit.varsEntrada])
+#print(pred_SinTratarV6)
 
 # Evaluar desempeño en el conjunto de prueba
-confMatrix_SinTratar1 <- confusionMatrix(pred_SinTratarV1, credit.Datos.Test[[credit.varSalida]])
-confMatrix_SinTratar2 <- confusionMatrix(pred_SinTratarV2, credit.Datos.Test[[credit.varSalida]])
-confMatrix_SinTratar3 <- confusionMatrix(pred_SinTratarV3, credit.Datos.Test[[credit.varSalida]])
-confMatrix_SinTratar4 <- confusionMatrix(pred_SinTratarV4, credit.Datos.Test[[credit.varSalida]])
-confMatrix_SinTratar5 <- confusionMatrix(pred_SinTratarV5, credit.Datos.Test[[credit.varSalida]])
-confMatrix_SinTratar6 <- confusionMatrix(pred_SinTratarV6, credit.Datos.Test[[credit.varSalida]])
+#confMatrix_SinTratar1 <- confusionMatrix(pred_SinTratarV1, credit.Datos.Test[[credit.varSalida]])
+#confMatrix_SinTratar2 <- confusionMatrix(pred_SinTratarV2, credit.Datos.Test[[credit.varSalida]])
+#confMatrix_SinTratar3 <- confusionMatrix(pred_SinTratarV3, credit.Datos.Test[[credit.varSalida]])
+#confMatrix_SinTratar4 <- confusionMatrix(pred_SinTratarV4, credit.Datos.Test[[credit.varSalida]])
+#confMatrix_SinTratar5 <- confusionMatrix(pred_SinTratarV5, credit.Datos.Test[[credit.varSalida]])
+#confMatrix_SinTratar6 <- confusionMatrix(pred_SinTratarV6, credit.Datos.Test[[credit.varSalida]])
 
 
 # Predicciones para el modelo con tratamiento
-#set.seed(1234)
-#pred_Tratar <- predict(modeloTratarDatos, newdata = credit.Datos.Test[credit.varsEntrada])
-#print(pred_Tratar)
+set.seed(1234)
+pred_TratarV1 <- predict(modeloTratarDatosV1, newdata = credit.Datos.Test[credit.varsEntrada])
+print(pred_TratarV1)
+
+set.seed(1234)
+pred_TratarV2 <- predict(modeloTratarDatosV2, newdata = credit.Datos.Test[credit.varsEntrada])
+print(pred_TratarV2)
 
 # Evaluar desempeño en el conjunto de prueba
-#confMatrix_Tratar <- confusionMatrix(pred_Tratar, credit.Datos.Test[[credit.varSalida]])
+confMatrix_TratarV1 <- confusionMatrix(pred_TratarV1, credit.Datos.Test[[credit.varSalida]])
+confMatrix_TratarV2 <- confusionMatrix(pred_TratarV2, credit.Datos.Test[[credit.varSalida]])
 
 # Mostrar resultados
-print(confMatrix_SinTratar1)
-print(confMatrix_SinTratar2)
-print(confMatrix_SinTratar3)
-print(confMatrix_SinTratar4)
-print(confMatrix_SinTratar5)
-print(confMatrix_SinTratar6)
-#print(confMatrix_Tratar)
+#print(confMatrix_SinTratar1)
+#print(confMatrix_SinTratar2)
+#print(confMatrix_SinTratar3)
+#print(confMatrix_SinTratar4)
+#print(confMatrix_SinTratar5)
+#print(confMatrix_SinTratar6)
+
+print(confMatrix_TratarV1)
+print(confMatrix_TratarV2)
+
 
 ```
 
