@@ -1,0 +1,18 @@
+---
+title: "modeloRedNeuronal"
+output: html_document
+date: "2024-12-01"
+---
+```{r}
+rm(list = ls())
+credit<- read.csv("credit+approval/crx.data", header=FALSE,na.strings = "?")
+credit.trainIdx<-readRDS("credit.trainIdx.rds")
+categoricos_col<-c("V1","V4","V5","V6","V7","V9","V10","V12","V13","V16")
+credit[categoricos_col]<-lapply(credit[categoricos_col],FUN = as.factor)
+levels(credit$V4)<-c(levels(credit$V4),"t")
+credit.Datos.Train<-credit[credit.trainIdx,]
+credit.Datos.Test<-credit[-credit.trainIdx,]
+nrow(credit.Datos.Train)
+nrow(credit.Datos.Test)
+
+```
