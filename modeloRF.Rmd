@@ -1,0 +1,374 @@
+---
+title: "Modelo-rf"
+author: "P"
+date: "2024-11-23"
+output: html_document
+---
+
+Lo primero de todo es cargar la base de datos con todos los datos del data frame:
+
+```{r}
+rm(list = ls())
+credit<- read.csv("credit+approval/crx.data", header=FALSE,na.strings = "?")
+credit.trainIdx<-readRDS("credit.trainIdx.rds")
+categoricos_col<-c("V1","V4","V5","V6","V7","V9","V10","V12","V13","V16")
+credit[categoricos_col]<-lapply(credit[categoricos_col],FUN = as.factor)
+levels(credit$V4)<-c(levels(credit$V4),"t")
+credit.Datos.Train<-credit[credit.trainIdx,]
+credit.Datos.Test<-credit[-credit.trainIdx,]
+nrow(credit.Datos.Train)
+nrow(credit.Datos.Test)
+```
+
+Vamos a llevar a cabo otro de los estudios complejos necesarios para la práctica, en este caso, vamos a hacer uso de random forest.
+
+Primero vamos a llevar a cabo un previo análisi de los diversos parámetros de rf, mediante `modelLookup()`:
+
+```{r}
+library(caret)
+modelLookup("rf")
+```
+
+En este caso en concreto, apreciamos que rf solo cuenta con un parámetro en concreto con el que podemos hacer pruebas, este es **mtry**. En este parámetro se refleja el número de predictores o características que son seleccionados aleatoriamente en cada nodo de árbol para llevar a cabo la división necesaria o "split".
+
+El uso de random forest frenete a otro tipo de métodos de entrenamiento de datos, cuenta con varias ventajas, entre ellas, es menos propoenso al denominado "overffiting" o sobreentrenamiento frente a otros métodos, es muy robusto frente a outliers y además, es capaz de trabajar al mismo tiempo con datos numéricos y datos categóricos.
+
+Es por todo esto, que primero vamos a llevra a cabo un análisis de los resultados sin hacer un tratamiento previo de ningun predictor, (únicamente vamos a eliminar los NAs de los datos de entrada de "train").
+
+Eso sí, es de vital importancia antes de comenzar los diversos análisis, separar el predictor resultado (en nuestro caso V16) del resto de variables de entrada.
+
+```{r}
+credit.varSalida = c("V16")
+credit.varsEntrada = setdiff(names(credit), credit.varSalida)
+credit.Datos.Train <- na.omit(credit.Datos.Train)
+
+library(randomForest)
+
+library(caret)
+###################################
+set.seed(1234)
+rf.tunegrid <- expand.grid(mtry = 1:15)
+
+modeloSinTratarDatosV1<- train(
+  x = credit.Datos.Train[credit.varsEntrada],
+  y = credit.Datos.Train[[credit.varSalida]],
+  method = "rf",
+  trControl = trainControl(method = "cv", number = 5),
+  tuneGrid=rf.tunegrid,
+  importance=TRUE,
+  verbose = FALSE
+)
+####################################
+# Obtener la importancia de los predictores
+imp <- varImp(modeloSinTratarDatosV1, scale = FALSE)
+
+# Ver la importancia de los predictores
+print(imp)
+
+# Graficar la importancia de los predictores
+plot(imp)
+
+
+# Intentar con un valor fijo de mtry
+set.seed(1234)
+modeloSinTratarDatosV2<- train(
+  x = credit.Datos.Train[credit.varsEntrada],
+  y = credit.Datos.Train[[credit.varSalida]],
+  method = "rf",
+  trControl = trainControl(method = "cv", number = 5),
+  importance=TRUE,
+  verbose = FALSE
+)
+
+# Obtener la importancia de los predictores
+imp <- varImp(modeloSinTratarDatosV2, scale = FALSE)
+
+# Ver la importancia de los predictores
+print(imp)
+
+# Graficar la importancia de los predictores
+plot(imp)
+
+
+set.seed(1234)
+modeloSinTratarDatosV3 <- train(
+  x = credit.Datos.Train[credit.varsEntrada],
+  y = credit.Datos.Train[[credit.varSalida]],
+  method = "rf",
+  trControl = trainControl(method = "cv", number = 5),
+  tuneGrid = expand.grid(mtry = 1),
+  importance=TRUE,
+  verbose = FALSE
+)
+
+# Obtener la importancia de los predictores
+imp <- varImp(modeloSinTratarDatosV3, scale = FALSE)
+
+# Ver la importancia de los predictores
+print(imp)
+
+# Graficar la importancia de los predictores
+plot(imp)
+
+
+
+set.seed(1234)
+modeloSinTratarDatosV4 <- train(
+  x = credit.Datos.Train[credit.varsEntrada],
+  y = credit.Datos.Train[[credit.varSalida]],
+  method = "rf",
+  trControl = trainControl(method = "cv", number = 5),
+  tuneGrid = expand.grid(mtry = 2), 
+  importance=TRUE,
+  verbose = FALSE
+)
+
+# Obtener la importancia de los predictores
+imp <- varImp(modeloSinTratarDatosV4, scale = FALSE)
+
+# Ver la importancia de los predictores
+print(imp)
+
+# Graficar la importancia de los predictores
+plot(imp)
+
+
+# Ver el modelo entrenado
+print(modeloSinTratarDatosV1)
+print(modeloSinTratarDatosV2)
+print(modeloSinTratarDatosV3)
+print(modeloSinTratarDatosV4)
+
+```
+
+Hemos llevado a cabo dos pruebas, la primera, "modeloSinTratarDatosV1" no fijando un valor del hiperparámetro de "mtry", para que caret de forma interna optimice este valor para obtener el modelo con un mayor rendimiento y la segunda, "modeloSinTratarDatosV2" fijando de forma manual el valor de "mtry" a 1.
+
+
+
+-------CAMBIAR-------
+De esta manera, podemos apreciar que obtenemos un rendimiento bastante decente al ejecutar ambas pruebas, ya que obtenemos una fiabilidad del 88% en la primera versión (observando que los valores óptimos para "mtry" son de 2,8 y 15 en ese orden, aunque finalmente se evalúa 15 como el valor óptimo y final enmpleado) y del 86% en la segunda prueba, proporción bastante buena. Podemos apreciar lo previamente dicho, pese a no tener un tratamiento previo de los datos atípicos, obtenemos un buen rendimiento.
+
+Podemos apreciar que al realizar la prueba usando todos los valores posibles de **mtry**, hay dos predictores los cuales tienen importancia negativa, estos son V12 y V2, por los que estos afectan negativamente al modelo, por lo que vamos a llevar a cabo unas pruebas más borrando estos predictores.
+```{r}
+#creación de nuevo modelo a partir de modeloSintratarV1
+credit_mod=credit[,!(colnames(credit) %in% c("V2", "V12"))]
+credit.varSalida = c("V16")
+credit.varsEntrada_mod = setdiff(names(credit_mod), credit.varSalida)
+credit.Datos.Train <- na.omit(credit.Datos.Train)
+
+###################################
+set.seed(1234)
+rf.tunegrid <- expand.grid(mtry = 1:13)
+
+modeloSinTratarDatosV5<- train(
+  x = credit.Datos.Train[credit.varsEntrada_mod],
+  y = credit.Datos.Train[[credit.varSalida]],
+  method = "rf",
+  trControl = trainControl(method = "cv", number = 5),
+  tuneGrid=rf.tunegrid,
+  importance=TRUE,
+  verbose = FALSE
+)
+####################################
+# Obtener la importancia de los predictores
+imp <- varImp(modeloSinTratarDatosV5, scale = FALSE)
+
+# Ver la importancia de los predictores
+print(imp)
+
+# Graficar la importancia de los predictores
+plot(imp)
+
+print(modeloSinTratarDatosV5)
+
+
+```
+
+
+
+```{r}
+credit_mod2=credit[,!(colnames(credit) %in% c("V12"))]
+credit.varsEntrada_mod2 = setdiff(names(credit_mod2), credit.varSalida)
+###################################
+set.seed(1234)
+
+modeloSinTratarDatosV6<- train(
+  x = credit.Datos.Train[credit.varsEntrada_mod2],
+  y = credit.Datos.Train[[credit.varSalida]],
+  method = "rf",
+  trControl = trainControl(method = "cv", number = 5),
+  importance=TRUE,
+  verbose = FALSE
+)
+####################################
+# Obtener la importancia de los predictores
+imp <- varImp(modeloSinTratarDatosV5, scale = FALSE)
+
+# Ver la importancia de los predictores
+print(imp)
+
+# Graficar la importancia de los predictores
+plot(imp)
+
+print(modeloSinTratarDatosV6)
+```
+
+
+Ahora, vamos a llevar a cabo otro nuevo modelo de random forest, aunque en este caso, vamos a hacer un tratamiento previo de los NAs distinto, en este caso en vez de borrarlos, vamos a en el caso de los datos numéricos imputarlos con la mediana, ya que es un valor robusto frente a outliers (aunque podríamos hacer uso también de la media debido a la gran robustez de random forest), y en el caso de los predictores categóricos imputarlos con la moda.
+
+Primero, volvemos a cargar los datos, para que no haya problemas ni solapamientos con el caso anterior:
+
+```{r}
+rm(list = ls())
+credit<- read.csv("credit+approval/crx.data", header=FALSE,na.strings = "?")
+credit.trainIdx<-readRDS("credit.trainIdx.rds")
+categoricos_col<-c("V1","V4","V5","V6","V7","V9","V10","V12","V13","V16")
+credit[categoricos_col]<-lapply(credit[categoricos_col],FUN = as.factor)
+levels(credit$V4)<-c(levels(credit$V4),"t")
+credit.Datos.Train<-credit[credit.trainIdx,]
+credit.Datos.Test<-credit[-credit.trainIdx,]
+nrow(credit.Datos.Train)
+nrow(credit.Datos.Test)
+```
+
+```{r}
+# Imputar medianas en las columnas numéricas de credit.Datos.Train
+credit.Datos.Train$V2[is.na(credit.Datos.Train$V2)] <- median(credit.Datos.Train$V2, na.rm = TRUE)
+credit.Datos.Train$V14[is.na(credit.Datos.Train$V14)] <- median(credit.Datos.Train$V14, na.rm = TRUE)
+
+
+# Función para calcular la moda
+moda <- function(x) {
+  if (all(is.na(x))) return(NA)  # Manejar casos de solo NAs
+  names(which.max(table(x, useNA = "no")))
+}
+
+# Imputar la moda para variables categóricas
+credit.Datos.Train$V1[is.na(credit.Datos.Train$V1)] <- moda(credit.Datos.Train$V1)
+credit.Datos.Train$V4[is.na(credit.Datos.Train$V4)] <- moda(credit.Datos.Train$V4)
+credit.Datos.Train$V5[is.na(credit.Datos.Train$V5)] <- moda(credit.Datos.Train$V5)
+credit.Datos.Train$V6[is.na(credit.Datos.Train$V6)] <- moda(credit.Datos.Train$V6)
+credit.Datos.Train$V7[is.na(credit.Datos.Train$V7)] <- moda(credit.Datos.Train$V7)
+
+```
+
+Ahora vamos a observar el resultado que obtenemos al realizar este tratamiento previo de los datos.
+
+```{r}
+credit.varSalida = c("V16")
+credit.varsEntrada = setdiff(names(credit), credit.varSalida)
+
+set.seed(1234)
+modeloTratarDatosV1 <- train(
+  x = credit.Datos.Train[credit.varsEntrada],
+  y = credit.Datos.Train[[credit.varSalida]],
+  method = "rf",
+  trControl = trainControl(method = "cv", number = 5),
+  importance=TRUE,
+  verbose = FALSE
+)
+
+imp <- varImp(modeloTratarDatosV1, scale = FALSE)
+
+# Ver la importancia de los predictores
+print(imp)
+
+# Graficar la importancia de los predictores
+plot(imp)
+
+print(modeloTratarDatosV1)
+
+
+#eliminamos V12 dado a su importancia negativa
+credit_mod2=credit[,!(colnames(credit) %in% c("V12"))]
+credit.varsEntrada_mod2 = setdiff(names(credit_mod2), credit.varSalida)
+
+set.seed(1234)
+modeloTratarDatosV2 <- train(
+  x = credit.Datos.Train[credit.varsEntrada_mod2],
+  y = credit.Datos.Train[[credit.varSalida]],
+  method = "rf",
+  trControl = trainControl(method = "cv", number = 5),
+  importance=TRUE,
+  verbose = FALSE
+)
+
+imp <- varImp(modeloTratarDatosV2, scale = FALSE)
+
+# Ver la importancia de los predictores
+print(imp)
+
+# Graficar la importancia de los predictores
+plot(imp)
+
+print(modeloTratarDatosV2)
+
+
+```
+
+A continuación, vamos a observar el rendimiento que obtendríamos al ejecutar los distintos modelos probados de **random forest** con los datos de test.
+
+```{r}
+#Nota: hay que cargar los datos de forma correcta
+# Predicciones para el modelos sin tratamiento
+#set.seed(1234)
+#pred_SinTratarV1 <- predict(modeloSinTratarDatosV1, newdata = credit.Datos.Test[credit.varsEntrada])
+#print(pred_SinTratarV1)
+
+#set.seed(1234)
+#pred_SinTratarV2 <- predict(modeloSinTratarDatosV2, newdata = credit.Datos.Test[credit.varsEntrada])
+#print(pred_SinTratarV2)
+
+#set.seed(1234)
+#pred_SinTratarV3 <- predict(modeloSinTratarDatosV3, newdata = credit.Datos.Test[credit.varsEntrada])
+#print(pred_SinTratarV3)
+
+#set.seed(1234)
+#pred_SinTratarV4 <- predict(modeloSinTratarDatosV4, newdata = credit.Datos.Test[credit.varsEntrada])
+#print(pred_SinTratarV4)
+
+#set.seed(1234)
+#pred_SinTratarV5<- predict(modeloSinTratarDatosV5, newdata = credit.Datos.Test[credit.varsEntrada])
+#print(pred_SinTratarV5)
+
+#set.seed(1234)
+#pred_SinTratarV6<- predict(modeloSinTratarDatosV6, newdata = credit.Datos.Test[credit.varsEntrada])
+#print(pred_SinTratarV6)
+
+# Evaluar desempeño en el conjunto de prueba
+#confMatrix_SinTratar1 <- confusionMatrix(pred_SinTratarV1, credit.Datos.Test[[credit.varSalida]])
+#confMatrix_SinTratar2 <- confusionMatrix(pred_SinTratarV2, credit.Datos.Test[[credit.varSalida]])
+#confMatrix_SinTratar3 <- confusionMatrix(pred_SinTratarV3, credit.Datos.Test[[credit.varSalida]])
+#confMatrix_SinTratar4 <- confusionMatrix(pred_SinTratarV4, credit.Datos.Test[[credit.varSalida]])
+#confMatrix_SinTratar5 <- confusionMatrix(pred_SinTratarV5, credit.Datos.Test[[credit.varSalida]])
+#confMatrix_SinTratar6 <- confusionMatrix(pred_SinTratarV6, credit.Datos.Test[[credit.varSalida]])
+
+
+# Predicciones para el modelo con tratamiento
+set.seed(1234)
+pred_TratarV1 <- predict(modeloTratarDatosV1, newdata = credit.Datos.Test[credit.varsEntrada])
+print(pred_TratarV1)
+
+set.seed(1234)
+pred_TratarV2 <- predict(modeloTratarDatosV2, newdata = credit.Datos.Test[credit.varsEntrada])
+print(pred_TratarV2)
+
+# Evaluar desempeño en el conjunto de prueba
+confMatrix_TratarV1 <- confusionMatrix(pred_TratarV1, credit.Datos.Test[[credit.varSalida]])
+confMatrix_TratarV2 <- confusionMatrix(pred_TratarV2, credit.Datos.Test[[credit.varSalida]])
+
+# Mostrar resultados
+#print(confMatrix_SinTratar1)
+#print(confMatrix_SinTratar2)
+#print(confMatrix_SinTratar3)
+#print(confMatrix_SinTratar4)
+#print(confMatrix_SinTratar5)
+#print(confMatrix_SinTratar6)
+
+print(confMatrix_TratarV1)
+print(confMatrix_TratarV2)
+
+
+```
+
+En este caso, podemos apreciar que los modelos con los que obtenemos unos buenos resultados, es decir un valor de fiabilidad mayor al 85%, son el modelos sin tratar datos fijando "mtry" a 1 (la segunda versión) y la versión tratando los valores no identificados o valores missing.
