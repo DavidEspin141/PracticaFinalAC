@@ -4,6 +4,7 @@ output: html_document
 date: "2024-12-01"
 ---
 ```{r}
+library(caret)
 rm(list = ls())
 credit<- read.csv("credit+approval/crx.data", header=FALSE,na.strings = "?")
 credit.trainIdx<-readRDS("credit.trainIdx.rds")
@@ -14,5 +15,68 @@ credit.Datos.Train<-credit[credit.trainIdx,]
 credit.Datos.Test<-credit[-credit.trainIdx,]
 nrow(credit.Datos.Train)
 nrow(credit.Datos.Test)
-
+credit.varSalida = c("V16")
+credit.varsEntrada = setdiff(names(credit), credit.varSalida)
 ```
+
+Para trabajar con el modelo **nnet**, que representa una red neuronal, 
+primero debemos estudiar el modelo, viendo los parámetros que contiene.
+
+```{r}
+modelLookup("nnet")
+```
+
+Vemos que **nnet** tiene 2 parámetros, size y decay, por lo que podremos
+modificarlos en un futuro.
+Para empezar con el entrenamiento, debemos saber que el modelo nnet no procesa 
+datos nulos, es decir, el modelo dará errores si lo entrenamos sin hacer una
+modificación previa de los datos que tenemos.
+
+Como sabemos que las variables numéricas con valores nulos son V2 y V14, 
+las procesamos sustituyendo los valores nulos por sus valores de media.
+
+```{r}
+credit.Datos.Train$V2[is.na(credit.Datos.Train$V2)] =
+  median(credit.Datos.Train$V2,na.rm = TRUE)
+credit.Datos.Train$V14[is.na(credit.Datos.Train$V14)] =
+  median(credit.Datos.Train$V14,na.rm = TRUE)
+```
+
+Para las variables categóricas hacemos lo mismo pero aplicando los valores 
+nulos a la moda de cada variable.
+
+```{r}
+moda = 
+  function(x) {
+    names(which.max(table(x, useNA = "no")))  
+  }
+credit.Datos.Train$V1[is.na(credit.Datos.Train$V1)] = 
+  moda(credit.Datos.Train$V1)
+credit.Datos.Train$V4[is.na(credit.Datos.Train$V4)] = 
+  moda(credit.Datos.Train$V4)
+credit.Datos.Train$V5[is.na(credit.Datos.Train$V5)] = 
+  moda(credit.Datos.Train$V5)
+credit.Datos.Train$V6[is.na(credit.Datos.Train$V6)] = 
+  moda(credit.Datos.Train$V6)
+credit.Datos.Train$V7[is.na(credit.Datos.Train$V7)] = 
+  moda(credit.Datos.Train$V7)
+```
+
+Tras eliminar los valores nulos ya podemos entrenar el modelo, en este, hemos
+usado el parámetro preProcess ya que nnet es muy sensible a las escalas de 
+los valores de entrada, y trace = FALSE por no llenar el terminal de
+información en cada iteración que se haga en el entrenamiento.
+
+```{r}
+library(nnet)
+set.seed(1234)
+credit.modelo.nnet = train(
+  credit.Datos.Train[credit.varsEntrada], 
+  credit.Datos.Train[[credit.varSalida]], 
+  preProcess = c("center", "scale"),
+  method = "nnet",
+  trace = FALSE)
+
+credit.modelo.nnet
+```
+
