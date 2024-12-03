@@ -407,9 +407,37 @@ En esta sección vamos a entrenar el modelo con los datos dados, para ello
 lo primero que debemos hacer es elegir las técnicas de entrenamiento según
 las ofrecidas por caret.
 
-En nuestro caso hemos elegido usar rpart (árboles de decisión) como técnica
-de tipo sencillo, y svmRadial (Support Vector Machine), gbm (Gradient 
-Boosting Machine) y rf (Bosques Aleatorios) como técnicas complejas.
+Para empezar, vamos a volver a cargar la base de datos.
+
+```{r}
+rm(list = ls())
+credit<- read.csv("credit+approval/crx.data", header=FALSE,na.strings = "?")
+credit.trainIdx<-readRDS("credit.trainIdx.rds")
+categoricos_col<-c("V1","V4","V5","V6","V7","V9","V10","V12","V13","V16")
+credit[categoricos_col]<-lapply(credit[categoricos_col],FUN = as.factor)
+levels(credit$V4)<-c(levels(credit$V4),"t")
+credit.Datos.Train<-credit[credit.trainIdx,]
+credit.Datos.Test<-credit[-credit.trainIdx,]
+nrow(credit.Datos.Train)
+nrow(credit.Datos.Test)
+```
+
+El modelo simple que vamos a usar en la práctica es Rpart (Recursive 
+Partitioning), ya que es una técnica rápida, fácil de interpretar, eficaz y 
+que trabaja con datos categóricos y numéricos, lo que simplifica el 
+preprocesamiento de estos.
+
+Para poder usar el modelo previamente debemos conocer sus hiper-parámetros,
+para ello usamos `modelLookup()`
+
+```{r}
+library(caret)
+modelLookup(("rpart"))
+```
+
+Vemos que el único hiper-parámetro de este modelo es **cp**, que indica la 
+complejidad del modelo, es decir, controla cuando el algoritmo crece o para
+de dividirse.
 
 Antes de comenzar a entrenar tenemos que separar los predictores de la 
 variable objetivo.
@@ -419,67 +447,154 @@ credit.varSalida = c("V16")
 credit.varsEntrada = setdiff(names(credit), credit.varSalida)
 ```
 
-Para empezar, entrenaremos el modelo con rpart, ya que es una técnica rápida,
-fácil de interpretar, eficaz y que trabaja con datos categóricos y numéricos,
-lo que simplifica el preprocesamiento de estos.
+Vamos a hacer distintas pruebas con distintos preprocesamientos de datos
+para encontrar el mejor resultado posible.
 
-Vemos que se necesita un preprocesamiento especial en las variables categóricas,
-ya que deben tener todas los mismos niveles definidos.
+Para comenzar, lo único que haremos es tratar los NAs de los datos de 
+entrenamiento para evitar posibles errores ya que `rpart` no procesa
+correctamente dichos datos.
+
+Para ello, vamos a investigar en nuestras variables numéricas para ver qué 
+distribución siguen.
 
 ```{r}
-for(cat in categoricos_col){
-  credit.Datos.Train[[cat]] = factor(
-    credit.Datos.Train[[cat]],
-    levels = unique(credit.Datos.Train[[cat]])
-  )
-  credit.Datos.Test[[cat]] = factor(
-    credit.Datos.Test[[cat]],
-    levels = unique(credit.Datos.Test[[cat]])
-  )
-}
-credit.modelo.rpart = train(credit.Datos.Train[credit.varsEntrada],
+library(ggplot2)
+library(gridExtra)
+p1 = ggplot(data=credit,aes(sample=V2)) +
+  ggtitle("QQ plot para V2") +
+  geom_qq() + 
+  stat_qq_line() + 
+  xlab("Distribución teórica") + ylab("Distribución muestral")
+p2 = ggplot(data=credit,aes(sample=V14)) +
+  ggtitle("QQ plot para V14") +
+  geom_qq() + 
+  stat_qq_line() + 
+  xlab("Distribución teórica") + ylab("Distribución muestral")
+
+grid.arrange(p1,p2,nrow=2)
+```
+
+Como podemos ver en las dos variables numéricas que contienen NAs, V2 sigue 
+una normal cuyos valores se separan de esta en los extremos; en el caso de V14, 
+vemos que está sesgada a la derecha, así que decidimos sustituir los NAs de 
+estas variables por la mediana, ya que consideramos una opción más sólida
+que la media, ya que esta podría estar desviada debido a los valores altos.
+
+Por otro lado, las variables categóricas tendrán un tratamiento similar, 
+pero esta vez los NAs los asociaremos a la moda
+
+```{r}
+#Variables numéricas
+credit.Datos.Train$V2[is.na(credit.Datos.Train$V2)] =
+  median(credit.Datos.Train$V2,na.rm = TRUE)
+credit.Datos.Train$V14[is.na(credit.Datos.Train$V14)] =
+  median(credit.Datos.Train$V14,na.rm = TRUE)
+
+#Variables categóricas
+moda = 
+  function(x) {
+    names(which.max(table(x, useNA = "no")))  
+  }
+credit.Datos.Train$V1[is.na(credit.Datos.Train$V1)] = 
+  moda(credit.Datos.Train$V1)
+credit.Datos.Train$V4[is.na(credit.Datos.Train$V4)] = 
+  moda(credit.Datos.Train$V4)
+credit.Datos.Train$V5[is.na(credit.Datos.Train$V5)] = 
+  moda(credit.Datos.Train$V5)
+credit.Datos.Train$V6[is.na(credit.Datos.Train$V6)] = 
+  moda(credit.Datos.Train$V6)
+credit.Datos.Train$V7[is.na(credit.Datos.Train$V7)] = 
+  moda(credit.Datos.Train$V7)
+```
+
+Una vez eliminados los NAs de nuestras variables, podemos comenzar a hacer
+pruebas con el modelo.
+
+La primera prueba que haremos será entrenar el modelo sin preprocesar más
+los datos, para ver los resultados con los que partimos en este entrenamiento.
+
+```{r}
+library(rpart)
+
+set.seed(1234)
+credit.modelo.rpart.noPreProc = train(credit.Datos.Train[credit.varsEntrada],
                             credit.Datos.Train[[credit.varSalida]],
-                            method='rpart')
-credit.modelo.rpart
-MLmetrics::Accuracy(predict(credit.modelo.rpart,
-                            credit.Datos.Train[credit.varsEntrada]),
-                    credit.Datos.Train[[credit.varSalida]])
-
-credit.modelo.rpart.Test = train(credit.Datos.Test[credit.varsEntrada],
-                            credit.Datos.Test[[credit.varSalida]],
-                            method='rpart')
-credit.modelo.rpart.Test
-MLmetrics::Accuracy(predict(credit.modelo.rpart.Test,
-                            credit.Datos.Test[credit.varsEntrada]),
-                    credit.Datos.Test[[credit.varSalida]])
+                            method='rpart',
+                            trControl = trainControl(method = "cv", number = 5))
+credit.modelo.rpart.noPreProc
 ```
 
-Con este entrenamiento podemos ver que, al estudiar la exactitud (Accuracy)
-con el último comando ejecutado, nos da un resultado superior al 85% en los 
-casos de entrenamiento, pero en los de prueba (test) nos da una exactitud
-menor, así que vamos a hacer un ajuste de hiperparámetros para mejorar la 
-eficiencia de nuestro predictor, en específico, vamos a trabajar con el 
-hiperparámetro cp (complexity parameter).
+Con este entrenamiento podemos ver que, al estudiar la exactitud (Accuracy),
+nos da valores superiores e inferiores a 85% dependiendo del **cp** usado.
 
-Para ajustar este hiperparámetro cambiaremos sus valores y haremos pruebas
-hasta dar con el resultado que más eficiencia nos proporcione.
-
-Primero tenemos que hacer un control de entrenamiento basado en el visto en 
-los laboratorios de prácticas.
+Ahora vamos a probar tratando los datos atípicos para ver si podemos mejorar
+el resultado obtenido previamente.
 
 ```{r}
-control = trainControl(method = "cv", number = 10)
+#Primero debemos eliminar los outliers
+eliminar_outliers = function(df, cols) {
+  rows_to_keep = rep(TRUE, nrow(df))
+  
+  for (col in cols) {
+    Q1 = quantile(df[[col]], 0.25, na.rm = TRUE)
+    Q3 = quantile(df[[col]], 0.75, na.rm = TRUE)
+    InterQ = Q3 - Q1
+    
+    lower_bound = Q1-1.5*InterQ
+    upper_bound = Q3+1.5*InterQ
+    
+    rows_to_keep = rows_to_keep&(df[[col]] >= lower_bound&df[[col]] 
+                                 <= upper_bound)
+  }
+  
+  return(na.omit(df[rows_to_keep, ]))
+}
+
+numeric_cols = credit.varsEntrada[sapply(credit.Datos.Train[credit.varsEntrada],
+                                         is.numeric)]
+
+credit.Datos.Train.Tratado = eliminar_outliers(credit.Datos.Train, numeric_cols)
+
+#Ya hemos tratado los datos, ahora volvemos a entrenar el modelo
+set.seed(1234)
+credit.modelo.rpart.PreProc = train(
+              credit.Datos.Train.Tratado[credit.varsEntrada],
+              credit.Datos.Train.Tratado[[credit.varSalida]],
+              method = "rpart",
+              trControl = trainControl(method = "cv", number = 5))
+credit.modelo.rpart.PreProc
+
 ```
 
-Este resultado es satisfactorio ya que significa que nuestro modelo predijo
-correctamente la gran mayoría de las instancias de datos probadas en 
-el entrenamiento.
+Ahora vamos a comparar los dos resultados obtenidos para ver cuál es más
+preciso estudiando las predicciones realizadas por los modelos (tratando datos
+y sin tratarlos) y haciendo matrices para comprobar la efectividad de las 
+pruebas.
 
 
+```{r}
+pred_SinTratar = predict(credit.modelo.rpart.noPreProc, 
+                          newdata = credit.Datos.Test[credit.varsEntrada])
+
+confMatrix_SinTratar = confusionMatrix(pred_SinTratar, 
+                                       credit.Datos.Test[[credit.varSalida]])
+
+#Mostrar resultados
+print(confMatrix_SinTratar)
 
 
+pred_Tratado = predict(credit.modelo.rpart.PreProc, 
+                       newdata = credit.Datos.Test[credit.varsEntrada])
 
-Ahora aqui van vuestros 2 modelos supongo 
+confMatrix_Tratado = confusionMatrix(pred_Tratado, 
+                                     credit.Datos.Test[[credit.varSalida]])
 
-Para finalizar, vamos a entrenar el modelo usando rf (Random Forest)
+# Mostrar resultados
+print(confMatrix_Tratado)
+
+```
+
+Como vemos en las matrices que mostramos, el modelo sin preprocesamiento de 
+datos tiene un valor de Accuracy superior al 85% mientras que este valor en 
+el modelo con los datos tratados es cercano al 84%.
 
