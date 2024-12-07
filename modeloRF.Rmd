@@ -101,6 +101,8 @@ modeloSinTratarDatosV3 <- train(
   verbose = FALSE
 )
 
+
+
 # Obtener la importancia de los predictores
 imp <- varImp(modeloSinTratarDatosV3, scale = FALSE)
 
@@ -319,8 +321,8 @@ A continuación, vamos a observar el rendimiento que obtendríamos al ejecutar l
 #pred_SinTratarV2 <- predict(modeloSinTratarDatosV2, newdata = credit.Datos.Test[credit.varsEntrada])
 #print(pred_SinTratarV2)
 
-#set.seed(1234)
-#pred_SinTratarV3 <- predict(modeloSinTratarDatosV3, newdata = credit.Datos.Test[credit.varsEntrada])
+set.seed(1234)
+pred_SinTratarV3 <- predict(modeloSinTratarDatosV3, newdata = credit.Datos.Test[credit.varsEntrada])
 #print(pred_SinTratarV3)
 
 #set.seed(1234)
@@ -338,7 +340,7 @@ A continuación, vamos a observar el rendimiento que obtendríamos al ejecutar l
 # Evaluar desempeño en el conjunto de prueba
 #confMatrix_SinTratar1 <- confusionMatrix(pred_SinTratarV1, credit.Datos.Test[[credit.varSalida]])
 #confMatrix_SinTratar2 <- confusionMatrix(pred_SinTratarV2, credit.Datos.Test[[credit.varSalida]])
-#confMatrix_SinTratar3 <- confusionMatrix(pred_SinTratarV3, credit.Datos.Test[[credit.varSalida]])
+confMatrix_SinTratar3 <- confusionMatrix(pred_SinTratarV3, credit.Datos.Test[[credit.varSalida]])
 #confMatrix_SinTratar4 <- confusionMatrix(pred_SinTratarV4, credit.Datos.Test[[credit.varSalida]])
 #confMatrix_SinTratar5 <- confusionMatrix(pred_SinTratarV5, credit.Datos.Test[[credit.varSalida]])
 #confMatrix_SinTratar6 <- confusionMatrix(pred_SinTratarV6, credit.Datos.Test[[credit.varSalida]])
@@ -360,7 +362,7 @@ confMatrix_TratarV2 <- confusionMatrix(pred_TratarV2, credit.Datos.Test[[credit.
 # Mostrar resultados
 #print(confMatrix_SinTratar1)
 #print(confMatrix_SinTratar2)
-#print(confMatrix_SinTratar3)
+print(confMatrix_SinTratar3)
 #print(confMatrix_SinTratar4)
 #print(confMatrix_SinTratar5)
 #print(confMatrix_SinTratar6)
