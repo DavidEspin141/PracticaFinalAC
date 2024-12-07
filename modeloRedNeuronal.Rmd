@@ -20,20 +20,17 @@ credit.varsEntrada = setdiff(names(credit), credit.varSalida)
 ```
 
 Para trabajar con el modelo **nnet**, que representa una red neuronal, 
-primero debemos estudiar el modelo, viendo los parámetros que contiene.
+primero debemos estudiar el modelo, viendo los hiper-parámetros que contiene.
 
 ```{r}
 modelLookup("nnet")
 ```
 
-Vemos que **nnet** tiene 2 parámetros, size y decay, por lo que podremos
-modificarlos en un futuro.
-Para empezar con el entrenamiento, debemos saber que el modelo nnet no procesa 
-datos nulos, es decir, el modelo dará errores si lo entrenamos sin hacer una
-modificación previa de los datos que tenemos.
+Vemos que **nnet** tiene 2 hiper-parámetros, size y decay, por lo que podremos modificarlos en un futuro.\ 
+Para empezar con el entrenamiento, debemos saber que el modelo nnet no procesa datos nulos, es decir, el modelo dará errores si lo entrenamos sin hacer una modificación previa de los datos que tenemos. \ 
 
-Como sabemos que las variables numéricas con valores nulos son V2 y V14, 
-las procesamos sustituyendo los valores nulos por sus valores de media.
+Como sabemos que las variables numéricas con valores nulos son V2 y V14,
+las procesamos sustituyendo los valores nulos por el valor de la mediana para esa variable.
 
 ```{r}
 credit.Datos.Train$V2[is.na(credit.Datos.Train$V2)] =
@@ -42,8 +39,7 @@ credit.Datos.Train$V14[is.na(credit.Datos.Train$V14)] =
   median(credit.Datos.Train$V14,na.rm = TRUE)
 ```
 
-Para las variables categóricas hacemos lo mismo pero aplicando los valores 
-nulos a la moda de cada variable.
+Para las variables categóricas hacemos lo mismo pero aplicando los valores nulos a la moda de cada variable.
 
 ```{r}
 moda = 
@@ -62,13 +58,11 @@ credit.Datos.Train$V7[is.na(credit.Datos.Train$V7)] =
   moda(credit.Datos.Train$V7)
 ```
 
-Tras eliminar los valores nulos ya podemos entrenar el modelo, en este, hemos
-usado el parámetro preProcess ya que nnet es muy sensible a las escalas de 
-los valores de entrada, y trace = FALSE por no llenar el terminal de
-información en cada iteración que se haga en el entrenamiento.
+Tras eliminar los valores nulos ya podemos entrenar el modelo. 
+En este hemos usado el parámetro preProcess ya que nnet es muy sensible a las escalas de los valores de entrada, y trace = FALSE por no llenar el terminal de información en cada iteración que se haga en el entrenamiento.\ 
+
 
 ```{r}
-library(nnet)
 eliminar_outliers <- function(df, cols) {
   # Iniciar vector lógico para mantener filas válidas
   rows_to_keep <- rep(TRUE, nrow(df))
@@ -92,33 +86,32 @@ eliminar_outliers <- function(df, cols) {
 
 
 
-
-
 # Identificar columnas numéricas
 numeric_cols <- credit.varsEntrada[sapply(credit.Datos.Train[credit.varsEntrada], is.numeric)]
 
 # Eliminar filas con outliers del conjunto de entrenamiento
 credit.Datos.Train_Tratar <- eliminar_outliers(credit.Datos.Train, numeric_cols)
 
-set.seed(1234)
+
+library(nnet)
 library(caret)
 
 set.seed(1234)
-
 # Entrenando el modelo de red neuronal
 tuneGrid <- expand.grid(
-  size = c(1, 2, 5),  # Número de neuronas en la capa oculta
-  decay = c(0.001, 0.01, 0.1)  # Tasa de regularización L2
+  #size = c(1, 2, 5),  # Número de neuronas en la capa oculta
+  size = seq(1,10,1),
+  decay = c(0.001, 0.01, 0.1,0.5)  # Tasa de regularización L2
 )
 
 # Entrenando el modelo de red neuronal
 credit.modelo.nnet <- train(
-  credit.Datos.Train[credit.varsEntrada],    # Datos de entrada
-  credit.Datos.Train[[credit.varSalida]],    # Variable de salida
-  preProcess = c("center", "scale", "knnImpute"),  # Preprocesamiento de los datos
+  credit.Datos.Train_Tratar[credit.varsEntrada],    # Datos de entrada
+  credit.Datos.Train_Tratar[[credit.varSalida]],    # Variable de salida
+  preProcess = c("center", "scale"),  # Preprocesamiento de los datos
   method = "nnet",                            # Usando redes neuronales
-  tuneGrid = tuneGrid,                        # Usando la grilla de parámetros
-  maxit = 35,                               # Número máximo de iteraciones
+  tuneGrid = tuneGrid,                        # Usando la parrilla de parámetros
+  maxit = 20,                               # Número máximo de iteraciones
   trace = FALSE,                              # No mostrar el progreso
   skip=TRUE
 )
