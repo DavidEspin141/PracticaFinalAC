@@ -95,7 +95,9 @@ tienen valores nulos son V1,V4,V5,V6 y V7.
 Como hemos analizado, nuestra base de datos cuenta con datos missing,
 por lo que sería conveniente cargarla de nuevo, pero indicándolo, para
 que así se guarden directamente como datos NA y se pueda hacer un
-tratamiento correcto de estos datos luego. Además, se hará todo el tratamiento anterior para dejar la base de datos como nos interesa, cn los tipos de datos bien establecidos y los niveles de los mismos.
+tratamiento correcto de estos datos luego. Además, se hará todo el
+tratamiento anterior para dejar la base de datos como nos interesa, cn
+los tipos de datos bien establecidos y los niveles de los mismos.
 
 ```{r}
 rm(list = ls())
@@ -109,7 +111,6 @@ credit.Datos.Test<-credit[-credit.trainIdx,]
 nrow(credit.Datos.Train)
 nrow(credit.Datos.Test)
 ```
-
 
 Una vez hechos los cambios anteriores y antes de pasar a hacer un
 análisis monovariable de algunas de las variables, vamos a ver de manera
@@ -179,9 +180,8 @@ NAs en alguna de sus columnas (predictores). Son las variables
 V1,V2,V4,V5,V6,V7 y V14 las que cuentan con NAs. El número de NAs es
 bastante pequeño y muy posiblemente lo más fácil sería directamente
 eliminar las observaciones que cuentan con NAs de nuestras
-observaciones. 
-Estas decisiones se tomarán más adelante en función del modelo usado y los requerimientos que este tenga. 
-
+observaciones. Estas decisiones se tomarán más adelante en función del
+modelo usado y los requerimientos que este tenga.
 
 ## Análisis monovariable
 
@@ -243,7 +243,8 @@ myhist+geom_rug(data=credit,aes(x=V2,y=0),
 ```
 
 Mediante el histograma resultante, podemos apreciar que efectivamente
-como hemos mencionado antes, se trata de una distribución normal, aunque en esta podemos apreciar muy claramente que se encuentra sesgada a la
+como hemos mencionado antes, se trata de una distribución normal, aunque
+en esta podemos apreciar muy claramente que se encuentra sesgada a la
 derecha, debido a los outlyers que se encuentran entre los datos. Debido
 a la misma razón,ocurre lo mencionado con la media y la mediana.\
 Los datos atípicos, los identificamos mejor también gracias al comado
@@ -330,22 +331,28 @@ una diagonal, lo que es muestra de su mayor nivel de correlación.
 
 ## Modelo Rpart
 
-Una vez hecho el análisis previo, se va a comenzar a crear modelos de predicción basados en aprendizaje supervisado. \ 
+Una vez hecho el análisis previo, se va a comenzar a crear modelos de
+predicción basados en aprendizaje supervisado.  
 
-El modelo simple que vamos a usar en la práctica es Rpart (Recursive 
-Partitioning), ya que es una técnica rápida, fácil de interpretar, eficaz y que trabaja con datos categóricos y numéricos, lo que simplifica el preprocesamiento de estos.\ 
+El modelo simple que vamos a usar en la práctica es Rpart (Recursive
+Partitioning), ya que es una técnica rápida, fácil de interpretar,
+eficaz y que trabaja con datos categóricos y numéricos, lo que
+simplifica el preprocesamiento de estos. 
 
-Para poder usar el modelo previamente debemos conocer sus hiper-parámetros, para ello usamos `modelLookup()`
+Para poder usar el modelo previamente debemos conocer sus
+hiper-parámetros, para ello usamos `modelLookup()`
 
 ```{r}
 library(caret)
 modelLookup(("rpart"))
 ```
 
-Vemos que el único hiper-parámetro de este modelo es **cp**, que indica la complejidad del modelo, es decir, controla cuando el algoritmo crece o para de dividirse. \ 
+Vemos que el único hiper-parámetro de este modelo es **cp**, que indica
+la complejidad del modelo, es decir, controla cuando el algoritmo crece
+o para de dividirse.  
 
-Antes de comenzar a entrenar tenemos que separar los predictores de la 
-variable objetivo. \ 
+Antes de comenzar a entrenar tenemos que separar los predictores de la
+variable objetivo.  
 
 ```{r}
 credit.varSalida = c("V16")
@@ -353,13 +360,15 @@ credit.varsEntrada = setdiff(names(credit), credit.varSalida)
 ```
 
 Vamos a hacer distintas pruebas con distintos preprocesamientos de datos
-para encontrar el mejor resultado posible. \ 
+para encontrar el mejor resultado posible.  
 
-Para comenzar, lo único que haremos es tratar los NAs de los datos de 
+Para comenzar, lo único que haremos es tratar los NAs de los datos de
 entrenamiento para evitar posibles errores ya que `rpart` no procesa
-correctamente dichos datos.\ 
+correctamente dichos datos. 
 
-Para ello, vamos a investigar en nuestras variables numéricas para ver quédistribución siguen para así decidir si es mejor opción sustituir los NAs por media o mediana.\ 
+Para ello, vamos a investigar en nuestras variables numéricas para ver
+quédistribución siguen para así decidir si es mejor opción sustituir los
+NAs por media o mediana. 
 
 ```{r}
 library(ggplot2)
@@ -378,12 +387,21 @@ p2 = ggplot(data=credit,aes(sample=V14)) +
 grid.arrange(p1,p2,nrow=2)
 ```
 
-Como podemos ver en las dos variables numéricas que contienen NAs, V2 sigue una normal cuyos valores se separan de esta en los extremos; en el caso de V14, vemos que está sesgada a la derecha, así que decidimos sustituir los NAs de estas variables por la mediana, ya que consideramos una opción más sólida que la media, ya que esta podría estar desviada debido a los valores altos. \ 
+Como podemos ver en las dos variables numéricas que contienen NAs, V2
+sigue una normal cuyos valores se separan de esta en los extremos; en el
+caso de V14, vemos que está sesgada a la derecha, así que decidimos
+sustituir los NAs de estas variables por la mediana, ya que consideramos
+una opción más sólida que la media, ya que esta podría estar desviada
+debido a los valores altos.  
 
 Por otro lado, las variables categóricas tendrán un tratamiento similar,
 pero esta vez los NAs los asociaremos a la moda.
 
-Lo primero que vamos a hacer, antes de hacer ningún tratamiento es copiar los datos de la base de datos en una nueva variable, de modo que podamos usar los datos en cada uno de los modelos como queramos, sin necesidad de tener que estar cargando la base de datos todo el rato y perdiendo las variables y modelos calculados. 
+Lo primero que vamos a hacer, antes de hacer ningún tratamiento es
+copiar los datos de la base de datos en una nueva variable, de modo que
+podamos usar los datos en cada uno de los modelos como queramos, sin
+necesidad de tener que estar cargando la base de datos todo el rato y
+perdiendo las variables y modelos calculados.
 
 ```{r}
 #Variables numéricas
@@ -408,13 +426,16 @@ credit.Datos.Train$V6[is.na(credit.Datos.Train$V6)] =
 credit.Datos.Train$V7[is.na(credit.Datos.Train$V7)] = 
   moda(credit.Datos.Train$V7)
 
-credit.Datos.Train.TratamientoOUT <- credit.Datos.Train
+credit.Datos.Train.TratamientoOUT_NA <- credit.Datos.Train
 
 ```
 
-Una vez eliminados los NAs de nuestras variables, podemos comenzar a hacer pruebas con el modelo. \ 
+Una vez eliminados los NAs de nuestras variables, podemos comenzar a
+hacer pruebas con el modelo.  
 
-La primera prueba que haremos será entrenar el modelo sin preprocesar más los datos, para ver los resultados con los que partimos en este entrenamiento. \ 
+La primera prueba que haremos será entrenar el modelo sin preprocesar
+más los datos, para ver los resultados con los que partimos en este
+entrenamiento.  
 
 ```{r}
 library(rpart)
@@ -427,9 +448,12 @@ credit.modelo.rpart.noPreProc = train(credit.Datos.Train[credit.varsEntrada],
 credit.modelo.rpart.noPreProc
 ```
 
-Con este entrenamiento podemos ver que, al estudiar la exactitud (Accuracy),nos da valores superiores e inferiores a 85% dependiendo del **cp** que se ha usado.\ 
+Con este entrenamiento podemos ver que, al estudiar la exactitud
+(Accuracy),nos da valores superiores e inferiores a 85% dependiendo del
+**cp** que se ha usado. 
 
-Ahora vamos a probar tratando los datos atípicos para ver si podemos mejorar el resultado obtenido previamente.
+Ahora vamos a probar tratando los datos atípicos para ver si podemos
+mejorar el resultado obtenido previamente.
 
 ```{r}
 #Primero debemos eliminar los outliers
@@ -451,10 +475,10 @@ eliminar_outliers = function(df, cols) {
   return(na.omit(df[rows_to_keep, ]))
 }
 
-numeric_cols = credit.varsEntrada[sapply(credit.Datos.Train.TratamientoOUT[credit.varsEntrada],
+numeric_cols = credit.varsEntrada[sapply(credit.Datos.Train.TratamientoOUT_NA[credit.varsEntrada],
                                          is.numeric)]
 
-credit.Datos.Train.TratamientoOUT = eliminar_outliers(credit.Datos.Train.TratamientoOUT, numeric_cols)
+credit.Datos.Train.TratamientoOUT = eliminar_outliers(credit.Datos.Train.TratamientoOUT_NA, numeric_cols)
 
 #Ya hemos tratado los datos, ahora volvemos a entrenar el modelo
 set.seed(1234)
@@ -468,8 +492,9 @@ credit.modelo.rpart.PreProc
 ```
 
 Ahora vamos a comparar los dos resultados obtenidos para ver cuál es más
-preciso estudiando las predicciones realizadas por los modelos (tratando datos y sin tratarlos) y haciendo matrices para comprobar la efectividad de las pruebas.\ 
-
+preciso estudiando las predicciones realizadas por los modelos (tratando
+datos y sin tratarlos) y haciendo matrices para comprobar la efectividad
+de las pruebas. 
 
 ```{r}
 pred_SinTratar = predict(credit.modelo.rpart.noPreProc, 
@@ -493,32 +518,53 @@ print(confMatrix_Tratado)
 
 ```
 
-Como vemos en las matrices que mostramos, el modelo sin preprocesamiento de datos tiene un valor de Accuracy superior al 85% mientras que este valor en el modelo con los datos tratados es cercano al 84%.
+Como vemos en las matrices que mostramos, el modelo sin preprocesamiento
+de datos tiene un valor de Accuracy superior al 85% mientras que este
+valor en el modelo con los datos tratados es cercano al 84%.
 
 # Modelo GBM
 
-Uno de los modelos complejos que vamos a usar en esta práctica es GBM (Stochastic Gradient Boosting).\
+Uno de los modelos complejos que vamos a usar en esta práctica es GBM
+(Stochastic Gradient Boosting).\
 
-Antes de usar el modelo gbm es importante entender a este. Si hacemos uso de `modelLookup()` podemos ver los hiper-parámetros con los que trabaja este modelo.
+Antes de usar el modelo gbm es importante entender a este. Si hacemos
+uso de `modelLookup()` podemos ver los hiper-parámetros con los que
+trabaja este modelo.
+
 ```{r}
 library(caret)
 modelLookup(("gbm"))
 ```
-1. El hiper-parámetro **n.trees** controla cuántos árboles se entrenan. Más árboles suelen mejorar el ajuste, pero un exceso puede llevar al sobreajuste. (valor por defecto es 100).\ 
-2. El hiper-parámetro **interaction.depth** Determina la complejidad de los árboles.  (valor 1= additive model; valor 2= 2way-directiones).\ 
-3. El hiper-parámetro **shrinkage** Controla cuánto contribuye cada árbol al modelo. Valores más bajos requieren más árboles para un buen ajuste. (valor por defecto es 0.1).\ 
-4. Finalmente, el hiper-parámetro **n.minobsinnode** Establece el tamaño mínimo de las hojas. Valores altos simplifican el modelo. (número real de observaciones, no el peso total).\ 
-Destacar que el modelo `gbm`tiene más hiper-parámetros que los `caret`pone a nuestra disposición.\ 
 
-Una de las ventajas de `gbm`es que es un modelo capaz de tratar con variables numéricas y categóricas.
+1.  El hiper-parámetro **n.trees** controla cuántos árboles se entrenan.
+    Más árboles suelen mejorar el ajuste, pero un exceso puede llevar al
+    sobreajuste. (valor por defecto es 100). 
+2.  El hiper-parámetro **interaction.depth** Determina la complejidad de
+    los árboles. (valor 1= additive model; valor 2= 2way-directiones). 
+3.  El hiper-parámetro **shrinkage** Controla cuánto contribuye cada
+    árbol al modelo. Valores más bajos requieren más árboles para un
+    buen ajuste. (valor por defecto es 0.1). 
+4.  Finalmente, el hiper-parámetro **n.minobsinnode** Establece el
+    tamaño mínimo de las hojas. Valores altos simplifican el modelo.
+    (número real de observaciones, no el peso total).  Destacar que el
+    modelo `gbm`tiene más hiper-parámetros que los `caret`pone a nuestra
+    disposición. 
 
-Una vez hecho este análisis previo, ahora debemos de ajustar los datos de la mejor manera para que este modelo trabaje de manera eficiente.\ 
+Una de las ventajas de `gbm`es que es un modelo capaz de tratar con
+variables numéricas y categóricas.
 
-`gbm`es un modelo que no maneja directamente los datos faltantes, por lo que hay que tratarlos antes de hacer un entrenamiento del modelo.
+Una vez hecho este análisis previo, ahora debemos de ajustar los datos
+de la mejor manera para que este modelo trabaje de manera eficiente. 
 
-Para tratar los datos nulos, se ha decidido sustituir estos valores faltantes, pues no sabemos lo que signfican las variables, por lo que eliminar las observaciones que contienen NAs no parece la mejor opción. 
+`gbm`es un modelo que no maneja directamente los datos faltantes, por lo
+que hay que tratarlos antes de hacer un entrenamiento del modelo.
 
-Como se ha visto en la sección anterior, las variables numéricas conviene sustituirlas por la mediana como se ha hecho antes. 
+Para tratar los datos nulos, se ha decidido sustituir estos valores
+faltantes, pues no sabemos lo que signfican las variables, por lo que
+eliminar las observaciones que contienen NAs no parece la mejor opción.
+
+Como se ha visto en la sección anterior, las variables numéricas
+conviene sustituirlas por la mediana como se ha hecho antes.
 
 ```{r}
 library(gbm)
@@ -533,7 +579,10 @@ modelo.gbm.SinTratarDatos <- train(
 modelo.gbm.SinTratarDatos
 ```
 
-Como el tratamiento de outliers sería el mismo que se ha realizado en el modelo Rpart, lo mejor es usar el conjunto de datos que se ha creado para representar que se han tratado los outliers. 
+Como el tratamiento de outliers sería el mismo que se ha realizado en el
+modelo Rpart, lo mejor es usar el conjunto de datos que se ha creado
+para representar que se han tratado los outliers.
+
 ```{r}
 set.seed(1234)
 modelo.gbm.TratarDatos <- train(
@@ -546,7 +595,9 @@ modelo.gbm.TratarDatos <- train(
 modelo.gbm.TratarDatos
 ```
 
-Ahora, vamos a comparar el modelo gbm, tanto con tratamiento de outliers como sin él, para ver que da mejores resultados. 
+Ahora, vamos a comparar el modelo gbm, tanto con tratamiento de outliers
+como sin él, para ver que da mejores resultados.
+
 ```{r}
 # Predicciones para el modelo sin tratar
 pred_SinTratar <- predict(modelo.gbm.SinTratarDatos, newdata = credit.Datos.Test[credit.varsEntrada])
@@ -567,7 +618,10 @@ print(confMatrix_Tratar)
 
 ```
 
-Ahora, vamos a explorar hiper-parámetros a trabes de la parrilla de valores, para tratar de buscar una configuración óptima que obtenga mejores resultados.
+Ahora, vamos a explorar hiper-parámetros a trabes de la parrilla de
+valores, para tratar de buscar una configuración óptima que obtenga
+mejores resultados.
+
 ```{r}
 tuneGridBuscarGbm = expand.grid(
   n.trees = seq(100, 1000, by = 100),  # Número de árboles
@@ -586,7 +640,9 @@ modelo.gbm.BuscarHiper <- train(
 )
 modelo.gbm.BuscarHiper
 ```
+
 Los resultados que se obtienen con el ajuste de hiper-parámetros son:
+
 ```{r}
 tuneGridMejoresHiper <- expand.grid(
   n.trees = 200,
@@ -613,5 +669,270 @@ confMatrixHiper <- confusionMatrix(predHiper, credit.Datos.Test[[credit.varSalid
 
 # Mostrar resultados
 print(confMatrixHiper)
+
+```
+
+# Modelo RF
+
+Ahora vamos a hacer uso de RF (Random Forest), otro de los modelos
+complejos a utilizar.
+
+Antes de empezar vamos a volver a hacer uso de `modelLookup()` con el
+fin de apreciar los hiperparámetros.
+
+```{r}
+library(caret)
+modelLookup("rf")
+```
+
+En este caso en concreto, apreciamos que rf solo cuenta con un parámetro
+en concreto con el que podemos hacer pruebas, este es **mtry**. En este
+parámetro se refleja el número de predictores o características que son
+seleccionados aleatoriamente en cada nodo de árbol para llevar a cabo la
+división necesaria o "split".
+
+Hay otro parámetro intersante que no se ha usado (debido a los malos
+resultados obtenidos a partir de él), este es **ntree**, que es el
+número concreto de árboles a generar en el random forest, aunque
+obteníamos mejores resultados dejando el valor por defecto proporcionado
+por caret(500).
+
+Al igual que `gbm` previamente, `rf` también es capaz de tratar tanto
+con variables o predictores numéricos como categóricos. Por otro lado,
+también cuenta con una gran robustez ante datos atípicos (información de
+la cual haremos uso en cuanto al tratamiento previo de los datos) y al
+denominado "overfitting"o sobrentrenamiento.
+
+A continuación, vamos a llevar a cabo el tratamiento de los datos previo
+a las pruebas. A pesar de su gran robustez ante outliers, `rf` no puede
+trabajar con datos missing, por lo que vamos a tratar con el mismo
+"tratamiento inicial" que el resto de modelos previamente mencionados.
+
+Para empezar vamos a llevar a cabo diversas pruebas. Las primeras las
+vamos a llevar a cabo simplemente eliminando los otlayers.
+
+```{r}
+#borramos los datos missing del conjunto de entrada
+credit.Datos.Train_Borrar_NA <- na.omit(credit.Datos.Train)
+
+library(randomForest)
+#primera prueba (haciendo que caret internamente, encuentre los mejores valores de mtry)
+modelo.rf.SinTratarDatosV1<- train(
+  x = credit.Datos.Train_Borrar_NA[credit.varsEntrada],
+  y = credit.Datos.Train_Borrar_NA[[credit.varSalida]],
+  method = "rf",
+  trControl = trainControl(method = "cv", number = 5),
+  importance=TRUE,
+  verbose = FALSE
+)
+
+imp1 <- varImp(modelo.rf.SinTratarDatosV1, scale = FALSE)
+
+# Graficar la importancia de los predictores
+plot(imp1,main="Importancia en el primer modelo eliminando NAs")
+
+print(modelo.rf.SinTratarDatosV1)
+
+#segunda prueba (haciendo uso de tunegrid probando todos los valores de mtry psodibles)
+set.seed(1234)
+rf.tunegrid <- expand.grid(mtry = 1:15)
+
+modelo.rf.SinTratarDatosV2<- train(
+  x = credit.Datos.Train_Borrar_NA[credit.varsEntrada],
+  y = credit.Datos.Train_Borrar_NA[[credit.varSalida]],
+  method = "rf",
+  trControl = trainControl(method = "cv", number = 5),
+  tuneGrid=rf.tunegrid,
+  importance=TRUE,
+  verbose = FALSE
+)
+
+imp2 <- varImp(modelo.rf.SinTratarDatosV2, scale = FALSE)
+
+# Graficar la importancia de los predictores
+plot(imp2,main="Importancia en el segundo modelo eliminando NAs")
+
+print(modelo.rf.SinTratarDatosV2)
+#tercera prueba (haciendo uso de un valor fijo de mtry)
+
+set.seed(1234)
+modelo.rf.SinTratarDatosV3 <- train(
+  x = credit.Datos.Train_Borrar_NA[credit.varsEntrada],
+  y = credit.Datos.Train_Borrar_NA[[credit.varSalida]],
+  method = "rf",
+  trControl = trainControl(method = "cv", number = 5),
+  tuneGrid = expand.grid(mtry = 1),
+  importance=TRUE,
+  verbose = FALSE
+)
+
+imp3 <- varImp(modelo.rf.SinTratarDatosV1, scale = FALSE)
+
+# Graficar la importancia de los predictores
+plot(imp3,main="Importancia en el tercer modelo eliminando NAs")
+
+print(modelo.rf.SinTratarDatosV3)
+
+
+```
+
+Cabe mencionar que de estas pruebas, la prueba del valor fijo, hemos
+hecho pruebas con todos los valores fijos posibles de mtry, sin embargo
+el mejor resultado lo obtenemos a posteriori con 'mtry=1'.
+
+En la salida apreciamos diversas gráficas que muestran los diverosos
+pesos o importancia que ha tenido cada predictor durante la creación del
+modelo. Además observamos también los resultados en el índice de certeza
+de los distintos modelos. En el primer modelo, obtenemos un índice del
+89% con mtry=8; en el segundo, el mejor resultado ronda el 88%; mientras
+que en el último modelo explorado, se obtiene un índice del 86%.
+
+Ahora apreciando los valores obtenidos a partir del parámetro
+**importance**, vemos que hay ciertos predictores en algunos modelos que
+tienen importancia negativa (lo que se supone que influye de forma
+negativa en el resultado del modelo), sin embargo haciendo diversas
+pruebas borrenado estos, no obtenemos mejores resultados.
+
+Ahora vamos a hacer un tratamiento diferente, en el que en vez de
+eliminar los datos missing, vamos a aplicar el mismo tratamiento
+anteriormente usado en modelos anteriores, es decir imputar por la
+mediana en el caso de los datos numéricos (aunque también podríamos por
+la media debido a la gran robustez del modelo frente a outliers), y por
+la moda en el caso de los datos categóricos.
+
+```{r}
+set.seed(1234)
+modelo.rf.TratarDatos <- train(
+  x = credit.Datos.Train.TratamientoOUT_NA[credit.varsEntrada],
+  y = credit.Datos.Train.TratamientoOUT_NA[[credit.varSalida]],
+  method = "rf",
+  trControl = trainControl(method = "cv", number = 5),
+  verbose = FALSE
+)
+
+print(modelo.rf.TratarDatos)
+```
+
+En este caso, no se ha realizado un estudio de las variables o
+predictores con mayor importancia, ya que al usarlo, se obtenía unos
+resultados peores. Observamos por otro lado que el valor de certeza del
+entrenamiento en este caso ronda el 87%.
+
+Por último, vamos a observar el resultado que obtenemos en los
+diferentes modelos finales, llevando a cabo la predicción con los datos
+del conjunto de "test".
+
+Primero de los modelos eliminando NAs.
+
+```{r}
+# Predicciones para el modelos sin tratamiento
+set.seed(1234)
+pred_rf.SinTratarV1 <- predict(modelo.rf.SinTratarDatosV1, newdata = credit.Datos.Test[credit.varsEntrada])
+
+set.seed(1234)
+pred_4r.SinTratarV2 <- predict(modelo.rf.SinTratarDatosV2, newdata = credit.Datos.Test[credit.varsEntrada])
+
+set.seed(1234)
+pred_rf.SinTratarV3 <- predict(modelo.rf.SinTratarDatosV3, newdata = credit.Datos.Test[credit.varsEntrada])
+
+# Evaluar desempeño en el conjunto de prueba
+confMatrix_rf.SinTratar1 <- confusionMatrix(pred_rf.SinTratarV1, credit.Datos.Test[[credit.varSalida]])
+confMatrix_rf.SinTratar2 <- confusionMatrix(pred_rf.SinTratarV2, credit.Datos.Test[[credit.varSalida]])
+confMatrix_rf.SinTratar3 <- confusionMatrix(pred_rf.SinTratarV3, credit.Datos.Test[[credit.varSalida]])
+
+# Mostrar resultados
+print(confMatrix_rf.SinTratar1)
+print(confMatrix_rf.SinTratar2)
+print(confMatrix_rf.SinTratar3)
+```
+
+En cuanto a estos modelos solo borrando NAs, obtenemos sólo un modelo
+satisfactorio, que es el modelo usando un valor fijo del hiperparámetro
+"mtry", en este caso 1. Obtenemos un resultado de certeza del 89.05%, lo
+que refleja un muy buen índice de eficacia.
+
+Por otra parte, vamos a observar el rendimiento obtenido por el modelo
+haciendo uso de un tratamiento de NAs.
+
+```{r}
+# Predicciones para el modelo con tratamiento
+set.seed(1234)
+pred_rf.Tratar <- predict(modelo.rf.TratarDatos, newdata = credit.Datos.Test[credit.varsEntrada])
+
+# Evaluar desempeño en el conjunto de prueba
+confMatrix_rf.Tratar <- confusionMatrix(pred_rf.Tratar, credit.Datos.Test[[credit.varSalida]])
+
+# Mostrar resultados
+print(confMatrix_rf.Tratar)
+
+```
+
+Observamos que, con el modelo tratando los datos NAs con imputación,
+obtenemos un índice de certeza del 85,4%, lo que resulta un índice
+bastante aceptable ya que es mayor del 85%.
+
+# Modelo NNET
+
+Para trabajar con el modelo **nnet**, que representa una red neuronal,
+primero debemos estudiar el modelo, viendo los hiper-parámetros que
+contiene.
+
+```{r}
+modelLookup("nnet")
+```
+
+Vemos que **nnet** tiene 2 hiper-parámetros, size y decay, por lo que
+podremos modificarlos en un futuro.  Para empezar con el entrenamiento,
+debemos saber que el modelo nnet no procesa datos nulos, es decir, el
+modelo dará errores si lo entrenamos sin hacer una modificación previa
+de los datos que tenemos.  
+
+Como sabemos que las variables numéricas con valores nulos son V2 y V14,
+las procesamos sustituyendo los valores nulos por el valor de la mediana
+para esa variable.
+
+Para las variables categóricas hacemos lo mismo pero aplicando los
+valores nulos a la moda de cada variable.
+
+Tras eliminar los valores nulos ya podemos entrenar el modelo. En este
+hemos usado el parámetro preProcess ya que nnet es muy sensible a las
+escalas de los valores de entrada, y trace = FALSE por no llenar el
+terminal de información en cada iteración que se haga en el
+entrenamiento. 
+
+```{r}
+set.seed(1234)
+# Entrenando el modelo de red neuronal
+tuneGrid <- expand.grid(
+  #size = c(1, 2, 5),  # Número de neuronas en la capa oculta
+  size = seq(1,10,1),
+  decay = c(0.001, 0.01, 0.1,0.5)  # Tasa de regularización L2
+)
+credit.modelo.nnet <- train(
+  credit.Datos.Train.TratamientoOUT[credit.varsEntrada],    # Datos de entrada
+  credit.Datos.Train.TratamientoOUT[[credit.varSalida]],    # Variable de salida
+  preProcess = c("center", "scale"),  # Preprocesamiento de los datos
+  method = "nnet",                            # Usando redes neuronales
+  tuneGrid = tuneGrid,                        # Usando la parrilla de parámetros
+  maxit = 20,                               # Número máximo de iteraciones
+  trace = FALSE,                              # No mostrar el progreso
+  skip=TRUE
+)
+# Ver los resultados del modelo
+print(credit.modelo.nnet)
+
+```
+
+```{r}
+#Mostrar resultados
+
+pred_red_neuronal = predict(credit.modelo.nnet, 
+                       newdata = credit.Datos.Test[credit.varsEntrada])
+
+confMatrix = confusionMatrix(pred_red_neuronal, 
+                                     credit.Datos.Test[[credit.varSalida]])
+
+# Mostrar resultados
+print(confMatrix)
 
 ```

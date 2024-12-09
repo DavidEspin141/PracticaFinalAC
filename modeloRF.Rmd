@@ -55,6 +55,7 @@ modeloSinTratarDatosV1<- train(
   method = "rf",
   trControl = trainControl(method = "cv", number = 5),
   tuneGrid=rf.tunegrid,
+  ntree=190,
   importance=TRUE,
   verbose = FALSE
 )
@@ -77,6 +78,7 @@ modeloSinTratarDatosV2<- train(
   method = "rf",
   trControl = trainControl(method = "cv", number = 5),
   importance=TRUE,
+  ntree=1500,
   verbose = FALSE
 )
 
@@ -313,16 +315,16 @@ A continuación, vamos a observar el rendimiento que obtendríamos al ejecutar l
 ```{r}
 #Nota: hay que cargar los datos de forma correcta
 # Predicciones para el modelos sin tratamiento
-#set.seed(1234)
-#pred_SinTratarV1 <- predict(modeloSinTratarDatosV1, newdata = credit.Datos.Test[credit.varsEntrada])
-#print(pred_SinTratarV1)
-
-#set.seed(1234)
-#pred_SinTratarV2 <- predict(modeloSinTratarDatosV2, newdata = credit.Datos.Test[credit.varsEntrada])
-#print(pred_SinTratarV2)
+set.seed(1234)
+pred_SinTratarV1 <- predict(modeloSinTratarDatosV1, newdata = credit.Datos.Test[credit.varsEntrada])
+print(pred_SinTratarV1)
 
 set.seed(1234)
-pred_SinTratarV3 <- predict(modeloSinTratarDatosV3, newdata = credit.Datos.Test[credit.varsEntrada])
+pred_SinTratarV2 <- predict(modeloSinTratarDatosV2, newdata = credit.Datos.Test[credit.varsEntrada])
+print(pred_SinTratarV2)
+
+#set.seed(1234)
+#pred_SinTratarV3 <- predict(modeloSinTratarDatosV3, newdata = credit.Datos.Test[credit.varsEntrada])
 #print(pred_SinTratarV3)
 
 #set.seed(1234)
@@ -338,9 +340,9 @@ pred_SinTratarV3 <- predict(modeloSinTratarDatosV3, newdata = credit.Datos.Test[
 #print(pred_SinTratarV6)
 
 # Evaluar desempeño en el conjunto de prueba
-#confMatrix_SinTratar1 <- confusionMatrix(pred_SinTratarV1, credit.Datos.Test[[credit.varSalida]])
-#confMatrix_SinTratar2 <- confusionMatrix(pred_SinTratarV2, credit.Datos.Test[[credit.varSalida]])
-confMatrix_SinTratar3 <- confusionMatrix(pred_SinTratarV3, credit.Datos.Test[[credit.varSalida]])
+confMatrix_SinTratar1 <- confusionMatrix(pred_SinTratarV1, credit.Datos.Test[[credit.varSalida]])
+confMatrix_SinTratar2 <- confusionMatrix(pred_SinTratarV2, credit.Datos.Test[[credit.varSalida]])
+#confMatrix_SinTratar3 <- confusionMatrix(pred_SinTratarV3, credit.Datos.Test[[credit.varSalida]])
 #confMatrix_SinTratar4 <- confusionMatrix(pred_SinTratarV4, credit.Datos.Test[[credit.varSalida]])
 #confMatrix_SinTratar5 <- confusionMatrix(pred_SinTratarV5, credit.Datos.Test[[credit.varSalida]])
 #confMatrix_SinTratar6 <- confusionMatrix(pred_SinTratarV6, credit.Datos.Test[[credit.varSalida]])
@@ -360,15 +362,15 @@ confMatrix_TratarV1 <- confusionMatrix(pred_TratarV1, credit.Datos.Test[[credit.
 confMatrix_TratarV2 <- confusionMatrix(pred_TratarV2, credit.Datos.Test[[credit.varSalida]])
 
 # Mostrar resultados
-#print(confMatrix_SinTratar1)
-#print(confMatrix_SinTratar2)
-print(confMatrix_SinTratar3)
+print(confMatrix_SinTratar1)
+print(confMatrix_SinTratar2)
+#print(confMatrix_SinTratar3)
 #print(confMatrix_SinTratar4)
 #print(confMatrix_SinTratar5)
 #print(confMatrix_SinTratar6)
 
-print(confMatrix_TratarV1)
-print(confMatrix_TratarV2)
+#print(confMatrix_TratarV1)
+#print(confMatrix_TratarV2)
 
 
 ```
