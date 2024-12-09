@@ -18,8 +18,8 @@ editor_options:
 
 # Carga de la base de datos
 
-Con esto comprobamos que hemos cargado de manera correcta la base de
-datos.
+Para comenzar, debemos cargar la base de datos con los datos propuestos, así
+como comprobar que la hemos cargado de manera correcta en nuestro entorno.
 
 ```{r}
 credit<- read.csv("credit+approval/crx.data", header=FALSE)
@@ -30,16 +30,18 @@ nrow(credit.Datos.Train)
 nrow(credit.Datos.Test)
 ```
 
-# Sección 1: Análisis DEA
+# Análisis DEA
 
 Antes de ponernos a tratar con los datos y analizar en detalle las
 variables como se pide en el enunciado, hemos accedido a la página web
 de la base de datos pues esta nos ofrece bastante información sobre el
 tipo de datos que estamos tratando.\
+
 Esta base de datos trata con valores relacionados con aplicaciones de
 tarjetas de crédito, es por ello por lo que las variables y sus
 correspondientes valores están cifrados con valores sin signficado, por
 la confidencialidad de datos.\
+
 Para esta práctica vamos a trabajar con el **aprendizaje supervisado**
 donde tenemos 15 predictores (V1-V15) y una variable de respuesta $y$
 (V16).
@@ -56,10 +58,10 @@ str(credit)
 
 Podemos ver como las variables categóricas
 (V1,V4,V5,V6,V7,V9,V10,V12,V13 y V16) no se han importado como tales,
-sino como caracteres (chr). Del mismo modo, V2 que es una variable
-numérica no tiene ese tipo de datos. Por tanto, lo primero que debemos
-de hacer antes de hacer ningún análisis de las variables es corregir
-esto.
+sino como caracteres (chr). 
+Del mismo modo, V2 que es una variable numérica no tiene ese tipo de datos. 
+Por tanto, lo primero que debemos de hacer antes de hacer ningún análisis de 
+las variables es corregir esto.
 
 ```{r}
 categoricos_col<-c("V1","V4","V5","V6","V7","V9","V10","V12","V13","V16")
@@ -71,10 +73,12 @@ Tras aplicar la transformación en los datos para convertirlos en
 categóricos, podemos apreciar que algunos de ellos poseen más niveles de
 los que aparecen en la página web, esto se debe a que hay algunos que
 tienen valores incompletos, por los que también los considera como
-nivel. A parte, podemos apreciar que la variable V4, posee 3 niveles (si
+nivel. 
+
+A parte, podemos apreciar que la variable V4, posee 3 niveles (si
 descontamos el nivel resultante de los valores incompletos), por lo que
 según la información que hay en la página web, nos faltaría un nivel.
-Podemos llegar a la conclusión de que este, es un valor que forma parte
+Podemos llegar a la conclusión de que este es un valor que forma parte
 del dominio, para este nivel no hay ningún valor que aparezca en los
 datos.
 
@@ -89,15 +93,17 @@ levels(credit$V6)
 levels(credit$V7)
 ```
 
-Con esto apreciamos de mejor forma, que las variables categóricas que
+Con esto apreciamos de mejor forma que las variables categóricas que
 tienen valores nulos son V1,V4,V5,V6 y V7.
 
 Como hemos analizado, nuestra base de datos cuenta con datos missing,
 por lo que sería conveniente cargarla de nuevo, pero indicándolo, para
 que así se guarden directamente como datos NA y se pueda hacer un
-tratamiento correcto de estos datos luego. Además, se hará todo el
-tratamiento anterior para dejar la base de datos como nos interesa, cn
-los tipos de datos bien establecidos y los niveles de los mismos.
+tratamiento correcto de estos datos luego. 
+
+Además, se hará todo el tratamiento anterior para dejar la base de datos como 
+nos interesa, con los tipos de datos bien establecidos y los niveles de los 
+mismos.
 
 ```{r}
 rm(list = ls())
@@ -123,6 +129,7 @@ summary(credit)
 
 Como vemos, nuestros datos cuentan con NAs que habrá que solucionar para
 poder hacer un buen modelo a posterior.\
+
 Antes de tratar los NAs, debemos de tratar los datos atípicos que puedan
 aparecer en nuestras variables, pues por ejemplo para las numéricas
 estos valores atípicos influyen en la representación de su distribución
@@ -165,6 +172,7 @@ valores pueden resultar o no un problema, dependiendo del modelo que se
 quiera idear, pues algunos como la regresión lineal tienen poca
 tolerancia a outliers y otros como randomForest los toleran y tratan de
 manera interna.\
+
 Es por ello por lo que esto datos atípicos se solucionarán o no a
 posteriori, cuando se haya elegido el modelo.
 
@@ -174,14 +182,16 @@ colSums(is.na(credit))
 
 ```
 
-Con esto podemos ver, que en total contamos con 37 filas de las 690
+Con esto podemos ver que, en total contamos con 37 filas de las 690
 observaciones totales que forman nuestro `data.frame` que cuentan con
-NAs en alguna de sus columnas (predictores). Son las variables
-V1,V2,V4,V5,V6,V7 y V14 las que cuentan con NAs. El número de NAs es
-bastante pequeño y muy posiblemente lo más fácil sería directamente
-eliminar las observaciones que cuentan con NAs de nuestras
-observaciones. Estas decisiones se tomarán más adelante en función del
-modelo usado y los requerimientos que este tenga.
+NAs en alguna de sus columnas (predictores). 
+
+Son las variables V1,V2,V4,V5,V6,V7 y V14 las que cuentan con NAs. 
+El número de NAs es bastante pequeño y muy posiblemente lo más fácil sería 
+directamente eliminar las observaciones que cuentan con NAs de nuestras
+observaciones. 
+Estas decisiones se tomarán más adelante en función del modelo usado y los 
+requerimientos del mismo.
 
 ## Análisis monovariable
 
@@ -201,10 +211,10 @@ cbind(total=table(credit$V1), porcentaje=porcent)
 ```
 
 En este caso, al tener un tipo de datos categórico, no nos encontramos
-con ningún dato fuera de rango o outlayer, ya que los datos están
+con ningún dato fuera de rango o outlier, ya que los datos están
 contenidos en el dominio de los dos niveles disponibles, "a" y "b".
 
-Al no ser de tipo númerico tampoco podemos apreciar una gráfica con la
+Al no ser de tipo numérico tampoco podemos apreciar una gráfica con la
 distribución de los datos y ver a que distribución se aproxima.
 
 A continuación, vamos a analizar el predictor "V2" a fondo, que al
@@ -245,9 +255,10 @@ myhist+geom_rug(data=credit,aes(x=V2,y=0),
 Mediante el histograma resultante, podemos apreciar que efectivamente
 como hemos mencionado antes, se trata de una distribución normal, aunque
 en esta podemos apreciar muy claramente que se encuentra sesgada a la
-derecha, debido a los outlyers que se encuentran entre los datos. Debido
+derecha, debido a los outliers que se encuentran entre los datos. Debido
 a la misma razón,ocurre lo mencionado con la media y la mediana.\
-Los datos atípicos, los identificamos mejor también gracias al comado
+
+Los datos atípicos los identificamos mejor también gracias al comado
 `jitter`, que crea un poco de ruido para poder visualizar de mejor forma
 los valores de los datos repetidos (comprobamos que hay ciertos posibles
 outliers en la parte derecha del histograma).
@@ -709,7 +720,7 @@ trabajar con datos missing, por lo que vamos a tratar con el mismo
 tratamiento inicial que el resto de modelos previamente mencionados, es decir, imputar los NAs con la mediana (aunque también podríamos por la media debido a la gran robustez del modelo frente a outliers) en el caso de los datos númericos y de la moda en el caso de los categóricos.
 
 Para empezar vamos a llevar a cabo diversas pruebas. Las primeras las
-vamos a llevar a cabo simplemente eliminando los outlayers.
+vamos a llevar a cabo simplemente eliminando los outliers.
 
 ```{r}
 library(randomForest)
@@ -933,7 +944,9 @@ print(confMatrix)
 
 ```
 Finalmente, observamos que el modelo final obtiene un ínidice de certeza del 86,86% al comprobar con el conjunto de datos test.\ 
-# Elección del modelo final
+
+# Comparación de modelos
+
 Una vez que ya hemos tratado diferentes modelos para el mismo conjunto de datos y hemos analizado los resultados que ofrecen, estamos en disposición de analizar las mejores versiones de `gbm`, `rpart`, `rf` y `nnet`para quedarnos finalmente con un modelo para nuestro aprendizaje supervisado. 
 ```{r}
 
@@ -970,11 +983,17 @@ plot(roc_nnet, col = "purple", add = TRUE)
 legend("bottomright", legend = c("rpart", "gbm", "rf", "nnet"), col = c("blue", "red", "green", "purple"), lwd = 2)
 
 ```
-Si analizamos en detalle las salidas de las curvas ROC para cada uno de los 4 modelos, podemos ver como la relación entre los verdaderos positivos y las falsas alarmas es mucho mejor en randomForest, pues la que más cercana a 1 se queda. \ 
+
+Si analizamos en detalle las salidas de las curvas ROC para cada uno de los 4 modelos, podemos ver como la relación entre los verdaderos positivos y las falsas alarmas es mucho mejor en `randomForest`, pues la que más cercana a 1 se queda. \ 
 Estos valores son algo que esperábamos, pues ya en las pruebas anteriores habíamos visto como randomForest era el que mejor **accuracy** obtenía con los datos de test. \ 
 
-Nuestra decisión final es elegir el modelo de randomForest llamado `modelo.rf.SinTratarDatosV3`como nuestro modelo final para este proyecto.\  
-Esto se debe a que este modelo ha sido el que mejores resultados ha obtenido en accuracy, algo muy importante ya que aquí consigue unos valores muy buenos en nuestro conjunto de datos de test. Es decir, nuestro modelo generaliza bastante bien para casos que no han sido incluidos en su entrenamiento. Por otro lado, es el que más cerca a 1 se queda en su representación a través de una curva ROC. \ 
+# Elección del modelo final
+
+Nuestra decisión final es elegir el modelo de `randomForest` llamado `modelo.rf.SinTratarDatosV3`como nuestro modelo final para este proyecto.\  
+Esto se debe a que este modelo ha sido el que mejores resultados ha obtenido en accuracy, algo muy importante ya que aquí consigue unos valores muy buenos en nuestro conjunto de datos de test. 
+
+Es decir, nuestro modelo generaliza bastante bien para casos que no han sido incluidos en su entrenamiento. Por otro lado, es el que más cerca a 1 se queda en su representación a través de una curva ROC. \ 
+
 Aquí se muestra, de manera exclusiva, los resultados que obtiene este modelo:
 ```{r}
 set.seed(1234)
@@ -989,5 +1008,3 @@ confMatrixFinal <- confusionMatrix(predFinal, credit.Datos.Test[[credit.varSalid
 
 print(confMatrixFinal)
 ```
-
-
