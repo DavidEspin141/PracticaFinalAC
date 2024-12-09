@@ -15,11 +15,14 @@ editor_options:
   markdown:
     wrap: 72
 ---
+# Previo al estudio
+Para poder compilar esta R Markdown, vamos a necesitar las librerías `ggplot2`, `lattice`, `caret`, `Proc`, `randomForest`, `gbm` y `nnet`. Por favor, instálalas antes de intentarlo.
 
 # Carga de la base de datos
 
-Para comenzar, debemos cargar la base de datos con los datos propuestos, así
-como comprobar que la hemos cargado de manera correcta en nuestro entorno.
+Para comenzar, debemos cargar la base de datos con los datos propuestos,
+así como comprobar que la hemos cargado de manera correcta en nuestro
+entorno.
 
 ```{r}
 credit<- read.csv("credit+approval/crx.data", header=FALSE)
@@ -58,10 +61,10 @@ str(credit)
 
 Podemos ver como las variables categóricas
 (V1,V4,V5,V6,V7,V9,V10,V12,V13 y V16) no se han importado como tales,
-sino como caracteres (chr). 
-Del mismo modo, V2 que es una variable numérica no tiene ese tipo de datos. 
-Por tanto, lo primero que debemos de hacer antes de hacer ningún análisis de 
-las variables es corregir esto.
+sino como caracteres (chr). Del mismo modo, V2 que es una variable
+numérica no tiene ese tipo de datos. Por tanto, lo primero que debemos
+de hacer antes de hacer ningún análisis de las variables es corregir
+esto.
 
 ```{r}
 categoricos_col<-c("V1","V4","V5","V6","V7","V9","V10","V12","V13","V16")
@@ -73,7 +76,7 @@ Tras aplicar la transformación en los datos para convertirlos en
 categóricos, podemos apreciar que algunos de ellos poseen más niveles de
 los que aparecen en la página web, esto se debe a que hay algunos que
 tienen valores incompletos, por los que también los considera como
-nivel. 
+nivel.
 
 A parte, podemos apreciar que la variable V4, posee 3 niveles (si
 descontamos el nivel resultante de los valores incompletos), por lo que
@@ -99,11 +102,11 @@ tienen valores nulos son V1,V4,V5,V6 y V7.
 Como hemos analizado, nuestra base de datos cuenta con datos missing,
 por lo que sería conveniente cargarla de nuevo, pero indicándolo, para
 que así se guarden directamente como datos NA y se pueda hacer un
-tratamiento correcto de estos datos luego. 
+tratamiento correcto de estos datos luego.
 
-Además, se hará todo el tratamiento anterior para dejar la base de datos como 
-nos interesa, con los tipos de datos bien establecidos y los niveles de los 
-mismos.
+Además, se hará todo el tratamiento anterior para dejar la base de datos
+como nos interesa, con los tipos de datos bien establecidos y los
+niveles de los mismos.
 
 ```{r}
 rm(list = ls())
@@ -184,14 +187,13 @@ colSums(is.na(credit))
 
 Con esto podemos ver que, en total contamos con 37 filas de las 690
 observaciones totales que forman nuestro `data.frame` que cuentan con
-NAs en alguna de sus columnas (predictores). 
+NAs en alguna de sus columnas (predictores).
 
-Son las variables V1,V2,V4,V5,V6,V7 y V14 las que cuentan con NAs. 
-El número de NAs es bastante pequeño y muy posiblemente lo más fácil sería 
+Son las variables V1,V2,V4,V5,V6,V7 y V14 las que cuentan con NAs. El
+número de NAs es bastante pequeño y muy posiblemente lo más fácil sería
 directamente eliminar las observaciones que cuentan con NAs de nuestras
-observaciones. 
-Estas decisiones se tomarán más adelante en función del modelo usado y los 
-requerimientos del mismo.
+observaciones. Estas decisiones se tomarán más adelante en función del
+modelo usado y los requerimientos del mismo.
 
 ## Análisis monovariable
 
@@ -536,7 +538,7 @@ valor en el modelo con los datos tratados es cercano al 84%.
 # Modelo GBM
 
 Uno de los modelos complejos que vamos a usar en esta práctica es GBM
-(Stochastic Gradient Boosting).\ 
+(Stochastic Gradient Boosting). 
 
 Antes de usar el modelo gbm es importante entender a este. Si hacemos
 uso de `modelLookup()` podemos ver los hiper-parámetros con los que
@@ -628,10 +630,12 @@ confMatrix_Tratar <- confusionMatrix(pred_Tratar, credit.Datos.Test[[credit.varS
 print(confMatrix_Tratar)
 
 ```
-Como se puede ver, el modelo con el tratamiento de outliers ofrece un accuracy superior al modelo sin tratar estos datos. \ 
-Ahora, vamos a explorar hiper-parámetros a trabes de la parrilla de
-valores, para tratar de buscar una configuración óptima que obtenga
-mejores resultados.
+
+Como se puede ver, el modelo con el tratamiento de outliers ofrece un
+accuracy superior al modelo sin tratar estos datos.   Ahora, vamos a
+explorar hiper-parámetros a trabes de la parrilla de valores, para
+tratar de buscar una configuración óptima que obtenga mejores
+resultados.
 
 ```{r}
 tuneGridBuscarGbm = expand.grid(
@@ -651,8 +655,11 @@ modelo.gbm.BuscarHiper <- train(
 )
 modelo.gbm.BuscarHiper
 ```
-Una vez que se ha hecho este modelo con el tuneGrid, vamos a crear otro que no explore hiper-parámetros y tan solo use los valores que acaban de ser seleccionados como mejores. \ 
-Los resultados que se obtienen con el ajuste de hiper-parámetros son:
+
+Una vez que se ha hecho este modelo con el tuneGrid, vamos a crear otro
+que no explore hiper-parámetros y tan solo use los valores que acaban de
+ser seleccionados como mejores.   Los resultados que se obtienen con el
+ajuste de hiper-parámetros son:
 
 ```{r}
 tuneGridMejoresHiper <- expand.grid(
@@ -717,7 +724,10 @@ denominado "overfitting"o sobrentrenamiento.
 A continuación, vamos a llevar a cabo el tratamiento de los datos previo
 a las pruebas. A pesar de su gran robustez ante outliers, `rf` no puede
 trabajar con datos missing, por lo que vamos a tratar con el mismo
-tratamiento inicial que el resto de modelos previamente mencionados, es decir, imputar los NAs con la mediana (aunque también podríamos por la media debido a la gran robustez del modelo frente a outliers) en el caso de los datos númericos y de la moda en el caso de los categóricos.
+tratamiento inicial que el resto de modelos previamente mencionados, es
+decir, imputar los NAs con la mediana (aunque también podríamos por la
+media debido a la gran robustez del modelo frente a outliers) en el caso
+de los datos númericos y de la moda en el caso de los categóricos.
 
 Para empezar vamos a llevar a cabo diversas pruebas. Las primeras las
 vamos a llevar a cabo simplemente eliminando los outliers.
@@ -790,14 +800,24 @@ el mejor resultado lo obtenemos a posteriori con 'mtry=1'.
 
 En la salida apreciamos diversas gráficas que muestran los diverosos
 pesos o importancia que ha tenido cada predictor durante la creación del
-modelo. Además, observamos también los resultados en el índice de certeza de los distintos modelos. En el primer modelo, obtenemos un índice del 87% con los valores de mtry 2, 8, 15 (se supone que son los valores con los que caret ha encontrado un mejor rendimiento, aunque finalmente destaca el 8 entre ellos); en el segundo, el mejor resultado ronda el 88% (caret vuelve a decir que se ha quedado con el valor de mtry de 8); mientras que en el último modelo explorado, se obtiene un índice del 85,88%. 
+modelo. Además, observamos también los resultados en el índice de
+certeza de los distintos modelos. En el primer modelo, obtenemos un
+índice del 87% con los valores de mtry 2, 8, 15 (se supone que son los
+valores con los que caret ha encontrado un mejor rendimiento, aunque
+finalmente destaca el 8 entre ellos); en el segundo, el mejor resultado
+ronda el 88% (caret vuelve a decir que se ha quedado con el valor de
+mtry de 8); mientras que en el último modelo explorado, se obtiene un
+índice del 85,88%. 
 
 Ahora apreciando los valores obtenidos a partir del parámetro
 **importance**, vemos que hay ciertos predictores en algunos modelos que
-tienen importancia negativa (V12 en el primer y tercer modelo, lo que se supone que influye de forma negativa en el resultado del modelo), sin embargo haciendo diversas pruebas borrando estos, no obtenemos mejores resultados. 
+tienen importancia negativa (V12 en el primer y tercer modelo, lo que se
+supone que influye de forma negativa en el resultado del modelo), sin
+embargo haciendo diversas pruebas borrando estos, no obtenemos mejores
+resultados. 
 
-Ahora vamos a hacer un tratamiento diferente, en el que en vez de
-tratar solo los datos missing, vamos a aplicar el mismo tratamiento
+Ahora vamos a hacer un tratamiento diferente, en el que en vez de tratar
+solo los datos missing, vamos a aplicar el mismo tratamiento
 anteriormente usado en modelos anteriores, es decir borrar los outliers.
 
 ```{r}
@@ -816,16 +836,17 @@ print(modelo.rf.TratarDatos)
 En este caso, no se ha realizado un estudio de las variables o
 predictores con mayor importancia, ya que al usarlo, se obtenía unos
 resultados peores. Observamos por otro lado que el valor de certeza del
-entrenamiento en este caso ronda el 85,7% (caret escoge el valor de mtry 2). 
+entrenamiento en este caso ronda el 85,7% (caret escoge el valor de mtry
+2). 
 
 Por último, vamos a observar el resultado que obtenemos en los
 diferentes modelos finales, llevando a cabo la predicción con los datos
-del conjunto de "test".\ 
+del conjunto de "test". 
 
 Primero de los modelos eliminando NAs.
 
 ```{r}
-# Predicciones para el modelos sin tratamiento
+# Predicciones para los modelos sin tratamiento
 set.seed(1234)
 pred_rf.SinTratarV1 <- predict(modelo.rf.SinTratarDatosV1, newdata = credit.Datos.Test[credit.varsEntrada])
 
@@ -882,20 +903,23 @@ modelLookup("nnet")
 ```
 
 Vemos que **nnet** tiene 2 hiper-parámetros, size y decay, por lo que
-podremos modificarlos en un futuro.  
+podremos modificarlos en un futuro. 
 
--**size** representa el tamaño de la capa oculta de la red, es decir el número de neuronas que tiene esta. 
+\-**size** representa el tamaño de la capa oculta de la red, es decir el
+número de neuronas que tiene esta. 
 
--**decay** representa la tasa de decaimiento de la regularización L2. 
+\-**decay** representa la tasa de decaimiento de la regularización L2. 
 
-Para empezar con el entrenamiento, debemos saber que el modelo nnet no procesa datos nulos, es decir, el modelo dará errores si lo entrenamos sin hacer una modificación previa de los datos que tenemos.  
+Para empezar con el entrenamiento, debemos saber que el modelo nnet no
+procesa datos nulos, es decir, el modelo dará errores si lo entrenamos
+sin hacer una modificación previa de los datos que tenemos.  
 
 Como sabemos que las variables numéricas con valores nulos son V2 y V14,
 las procesamos sustituyendo los valores nulos por el valor de la mediana
-para esa variable.\ 
+para esa variable. 
 
 Para las variables categóricas hacemos lo mismo pero aplicando los
-valores nulos a la moda de cada variable.\ 
+valores nulos a la moda de cada variable. 
 
 Tras eliminar los valores nulos ya podemos entrenar el modelo. En este
 hemos usado el parámetro preProcess ya que nnet es muy sensible a las
@@ -925,11 +949,19 @@ credit.modelo.nnet <- train(
 print(credit.modelo.nnet)
 
 ```
-Por otra parte, cabe mencionar también el uso del parámetro **maxit** durante el entrenamiento.Este parámetro representa el número máximo de iteraciones para el proceso de ajuste de los parámetros de la red neuronal (pesos).
 
-En el entrenamiento observamos que caret encuentra la combinación de hiperparámetros de (size=0.6 y decay 0.5) como la óptima, la cual obtiene un índice de certeza del 84.47%.
+Por otra parte, cabe mencionar también el uso del parámetro **maxit**
+durante el entrenamiento.Este parámetro representa el número máximo de
+iteraciones para el proceso de ajuste de los parámetros de la red
+neuronal (pesos).
 
-A continuación, vamos a observar el rendimiento/índice de certeza del modelo aplicando predicciones en este con el conjunto test de datos.
+En el entrenamiento observamos que caret encuentra la combinación de
+hiperparámetros de (size=0.6 y decay 0.5) como la óptima, la cual
+obtiene un índice de certeza del 84.47%.
+
+A continuación, vamos a observar el rendimiento/índice de certeza del
+modelo aplicando predicciones en este con el conjunto test de datos.
+
 ```{r}
 #Mostrar resultados
 
@@ -943,11 +975,18 @@ confMatrix = confusionMatrix(pred_red_neuronal,
 print(confMatrix)
 
 ```
-Finalmente, observamos que el modelo final obtiene un ínidice de certeza del 86,86% al comprobar con el conjunto de datos test.\ 
+
+Finalmente, observamos que el modelo final obtiene un ínidice de certeza
+del 86,86% al comprobar con el conjunto de datos test. 
 
 # Comparación de modelos
 
-Una vez que ya hemos tratado diferentes modelos para el mismo conjunto de datos y hemos analizado los resultados que ofrecen, estamos en disposición de analizar las mejores versiones de `gbm`, `rpart`, `rf` y `nnet`para quedarnos finalmente con un modelo para nuestro aprendizaje supervisado. 
+Una vez que ya hemos tratado diferentes modelos para el mismo conjunto
+de datos y hemos analizado los resultados que ofrecen, estamos en
+disposición de analizar las mejores versiones de `gbm`, `rpart`, `rf` y
+`nnet`para quedarnos finalmente con un modelo para nuestro aprendizaje
+supervisado.
+
 ```{r}
 
 library(pROC)
@@ -984,17 +1023,28 @@ legend("bottomright", legend = c("rpart", "gbm", "rf", "nnet"), col = c("blue", 
 
 ```
 
-Si analizamos en detalle las salidas de las curvas ROC para cada uno de los 4 modelos, podemos ver como la relación entre los verdaderos positivos y las falsas alarmas es mucho mejor en `randomForest`, pues la que más cercana a 1 se queda. \ 
-Estos valores son algo que esperábamos, pues ya en las pruebas anteriores habíamos visto como randomForest era el que mejor **accuracy** obtenía con los datos de test. \ 
+Si analizamos en detalle las salidas de las curvas ROC para cada uno de
+los 4 modelos, podemos ver como la relación entre los verdaderos
+positivos y las falsas alarmas es mucho mejor en `randomForest`, pues la
+que más cercana a 1 se queda.   Estos valores son algo que esperábamos,
+pues ya en las pruebas anteriores habíamos visto como randomForest era
+el que mejor **accuracy** obtenía con los datos de test.  
 
 # Elección del modelo final
 
-Nuestra decisión final es elegir el modelo de `randomForest` llamado `modelo.rf.SinTratarDatosV3`como nuestro modelo final para este proyecto.\  
-Esto se debe a que este modelo ha sido el que mejores resultados ha obtenido en accuracy, algo muy importante ya que aquí consigue unos valores muy buenos en nuestro conjunto de datos de test. 
+Nuestra decisión final es elegir el modelo de `randomForest` llamado
+`modelo.rf.SinTratarDatosV3`como nuestro modelo final para este
+proyecto.  Esto se debe a que este modelo ha sido el que mejores
+resultados ha obtenido en accuracy, algo muy importante ya que aquí
+consigue unos valores muy buenos en nuestro conjunto de datos de test.
 
-Es decir, nuestro modelo generaliza bastante bien para casos que no han sido incluidos en su entrenamiento. Por otro lado, es el que más cerca a 1 se queda en su representación a través de una curva ROC. \ 
+Es decir, nuestro modelo generaliza bastante bien para casos que no han
+sido incluidos en su entrenamiento. Por otro lado, es el que más cerca a
+1 se queda en su representación a través de una curva ROC.  
 
-Aquí se muestra, de manera exclusiva, los resultados que obtiene este modelo:
+Aquí se muestra, de manera exclusiva, los resultados que obtiene este
+modelo:
+
 ```{r}
 set.seed(1234)
 modeloFinal <- modelo.rf.SinTratarDatosV3
