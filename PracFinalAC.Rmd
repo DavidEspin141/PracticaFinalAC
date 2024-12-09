@@ -475,10 +475,10 @@ eliminar_outliers = function(df, cols) {
   return(na.omit(df[rows_to_keep, ]))
 }
 
-numeric_cols = credit.varsEntrada[sapply(credit.Datos.Train.TratamientoOUT_NA[credit.varsEntrada],
+numeric_cols = credit.varsEntrada[sapply(credit.Datos.Train.TratamientoOUT[credit.varsEntrada],
                                          is.numeric)]
 
-credit.Datos.Train.TratamientoOUT = eliminar_outliers(credit.Datos.Train.TratamientoOUT_NA, numeric_cols)
+credit.Datos.Train.TratamientoOUT = eliminar_outliers(credit.Datos.Train.TratamientoOUT, numeric_cols)
 
 #Ya hemos tratado los datos, ahora volvemos a entrenar el modelo
 set.seed(1234)
@@ -715,8 +715,8 @@ vamos a llevar a cabo simplemente eliminando los otlayers.
 library(randomForest)
 #primera prueba (haciendo que caret internamente, encuentre los mejores valores de mtry)
 modelo.rf.SinTratarDatosV1<- train(
-  x = credit.Datos.Train_Borrar_NA[credit.varsEntrada],
-  y = credit.Datos.Train_Borrar_NA[[credit.varSalida]],
+  x = credit.Datos.Train[credit.varsEntrada],
+  y = credit.Datos.Train[[credit.varSalida]],
   method = "rf",
   trControl = trainControl(method = "cv", number = 5),
   importance=TRUE,
@@ -735,8 +735,8 @@ set.seed(1234)
 rf.tunegrid <- expand.grid(mtry = 1:15)
 
 modelo.rf.SinTratarDatosV2<- train(
-  x = credit.Datos.Train_Borrar_NA[credit.varsEntrada],
-  y = credit.Datos.Train_Borrar_NA[[credit.varSalida]],
+  x = credit.Datos.Train[credit.varsEntrada],
+  y = credit.Datos.Train[[credit.varSalida]],
   method = "rf",
   trControl = trainControl(method = "cv", number = 5),
   tuneGrid=rf.tunegrid,
@@ -754,8 +754,8 @@ print(modelo.rf.SinTratarDatosV2)
 
 set.seed(1234)
 modelo.rf.SinTratarDatosV3 <- train(
-  x = credit.Datos.Train_Borrar_NA[credit.varsEntrada],
-  y = credit.Datos.Train_Borrar_NA[[credit.varSalida]],
+  x = credit.Datos.Train[credit.varsEntrada],
+  y = credit.Datos.Train[[credit.varSalida]],
   method = "rf",
   trControl = trainControl(method = "cv", number = 5),
   tuneGrid = expand.grid(mtry = 1),
