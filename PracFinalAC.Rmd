@@ -426,7 +426,7 @@ credit.Datos.Train$V6[is.na(credit.Datos.Train$V6)] =
 credit.Datos.Train$V7[is.na(credit.Datos.Train$V7)] = 
   moda(credit.Datos.Train$V7)
 
-credit.Datos.Train.TratamientoOUT_NA <- credit.Datos.Train
+credit.Datos.Train.TratamientoOUT <- credit.Datos.Train
 
 ```
 
@@ -706,15 +706,12 @@ denominado "overfitting"o sobrentrenamiento.
 A continuación, vamos a llevar a cabo el tratamiento de los datos previo
 a las pruebas. A pesar de su gran robustez ante outliers, `rf` no puede
 trabajar con datos missing, por lo que vamos a tratar con el mismo
-"tratamiento inicial" que el resto de modelos previamente mencionados.
+tratamiento inicial que el resto de modelos previamente mencionados, es decir, imputar los NAs con la mediana (aunque también podríamos por la media debido a la gran robustez del modelo frente a outliers) en el caso de los datos númericos y de la moda en el caso de los categóricos.
 
 Para empezar vamos a llevar a cabo diversas pruebas. Las primeras las
 vamos a llevar a cabo simplemente eliminando los otlayers.
 
 ```{r}
-#borramos los datos missing del conjunto de entrada
-credit.Datos.Train_Borrar_NA <- na.omit(credit.Datos.Train)
-
 library(randomForest)
 #primera prueba (haciendo que caret internamente, encuentre los mejores valores de mtry)
 modelo.rf.SinTratarDatosV1<- train(
@@ -784,27 +781,23 @@ En la salida apreciamos diversas gráficas que muestran los diverosos
 pesos o importancia que ha tenido cada predictor durante la creación del
 modelo. Además observamos también los resultados en el índice de certeza
 de los distintos modelos. En el primer modelo, obtenemos un índice del
-89% con mtry=8; en el segundo, el mejor resultado ronda el 88%; mientras
-que en el último modelo explorado, se obtiene un índice del 86%.
+87% con los valores de mtry 2, 8, 15 (se supone que son los valores con los que caret ha encontrado un mejor rendimiento, aunque finalmente destaca el 8 entre ellos); en el segundo, el mejor resultado ronda el 88% (caret vuelve a decir que se ha quedado con el valor de mtry de 8); mientras
+que en el último modelo explorado, se obtiene un índice del 85,88%.
 
 Ahora apreciando los valores obtenidos a partir del parámetro
 **importance**, vemos que hay ciertos predictores en algunos modelos que
-tienen importancia negativa (lo que se supone que influye de forma
-negativa en el resultado del modelo), sin embargo haciendo diversas
-pruebas borrenado estos, no obtenemos mejores resultados.
+tienen importancia negativa (V12 en el primer y tercer modelo, lo que se supone que influye de forma negativa en el resultado del modelo), sin embargo haciendo diversas
+pruebas borrando estos, no obtenemos mejores resultados.
 
 Ahora vamos a hacer un tratamiento diferente, en el que en vez de
-eliminar los datos missing, vamos a aplicar el mismo tratamiento
-anteriormente usado en modelos anteriores, es decir imputar por la
-mediana en el caso de los datos numéricos (aunque también podríamos por
-la media debido a la gran robustez del modelo frente a outliers), y por
-la moda en el caso de los datos categóricos.
+tratar solo los datos missing, vamos a aplicar el mismo tratamiento
+anteriormente usado en modelos anteriores, es decir borrar los outliers.
 
 ```{r}
 set.seed(1234)
 modelo.rf.TratarDatos <- train(
-  x = credit.Datos.Train.TratamientoOUT_NA[credit.varsEntrada],
-  y = credit.Datos.Train.TratamientoOUT_NA[[credit.varSalida]],
+  x = credit.Datos.Train.TratamientoOUT[credit.varsEntrada],
+  y = credit.Datos.Train.TratamientoOUT[[credit.varSalida]],
   method = "rf",
   trControl = trainControl(method = "cv", number = 5),
   verbose = FALSE
@@ -816,7 +809,7 @@ print(modelo.rf.TratarDatos)
 En este caso, no se ha realizado un estudio de las variables o
 predictores con mayor importancia, ya que al usarlo, se obtenía unos
 resultados peores. Observamos por otro lado que el valor de certeza del
-entrenamiento en este caso ronda el 87%.
+entrenamiento en este caso ronda el 85,7% (caret escoge el valor de mtry 2).
 
 Por último, vamos a observar el resultado que obtenemos en los
 diferentes modelos finales, llevando a cabo la predicción con los datos
@@ -830,7 +823,7 @@ set.seed(1234)
 pred_rf.SinTratarV1 <- predict(modelo.rf.SinTratarDatosV1, newdata = credit.Datos.Test[credit.varsEntrada])
 
 set.seed(1234)
-pred_4r.SinTratarV2 <- predict(modelo.rf.SinTratarDatosV2, newdata = credit.Datos.Test[credit.varsEntrada])
+pred_rf.SinTratarV2 <- predict(modelo.rf.SinTratarDatosV2, newdata = credit.Datos.Test[credit.varsEntrada])
 
 set.seed(1234)
 pred_rf.SinTratarV3 <- predict(modelo.rf.SinTratarDatosV3, newdata = credit.Datos.Test[credit.varsEntrada])
@@ -846,13 +839,13 @@ print(confMatrix_rf.SinTratar2)
 print(confMatrix_rf.SinTratar3)
 ```
 
-En cuanto a estos modelos solo borrando NAs, obtenemos sólo un modelo
+En cuanto a estos modelos solo tratando NAs, obtenemos sólo un modelo
 satisfactorio, que es el modelo usando un valor fijo del hiperparámetro
-"mtry", en este caso 1. Obtenemos un resultado de certeza del 89.05%, lo
+"mtry", en este caso 1. Obtenemos un resultado de certeza del 88.32%, lo
 que refleja un muy buen índice de eficacia.
 
 Por otra parte, vamos a observar el rendimiento obtenido por el modelo
-haciendo uso de un tratamiento de NAs.
+haciendo uso de un tratamiento de NAs y outliers.
 
 ```{r}
 # Predicciones para el modelo con tratamiento
@@ -867,8 +860,8 @@ print(confMatrix_rf.Tratar)
 
 ```
 
-Observamos que, con el modelo tratando los datos NAs con imputación,
-obtenemos un índice de certeza del 85,4%, lo que resulta un índice
+Observamos que, con el modelo tratando los datos NAs y los outliers,
+obtenemos un índice de certeza del 86,86%, lo que resulta un índice
 bastante aceptable ya que es mayor del 85%.
 
 # Modelo NNET
@@ -882,7 +875,13 @@ modelLookup("nnet")
 ```
 
 Vemos que **nnet** tiene 2 hiper-parámetros, size y decay, por lo que
-podremos modificarlos en un futuro.  Para empezar con el entrenamiento,
+podremos modificarlos en un futuro.  
+
+-**size** representa el tamaño de la capa oculta de la red, es decir el número de neuronas que tiene esta.
+
+-**decay** representa la tasa de decaimiento de la regularización L2.
+
+Para empezar con el entrenamiento,
 debemos saber que el modelo nnet no procesa datos nulos, es decir, el
 modelo dará errores si lo entrenamos sin hacer una modificación previa
 de los datos que tenemos.  
@@ -922,7 +921,11 @@ credit.modelo.nnet <- train(
 print(credit.modelo.nnet)
 
 ```
+Por otra parte, cabe mencionar también el uso del parámetro **maxit** durante el entrenamiento.Este parámetro representa el número máximo de iteraciones para el proceso de ajuste de los parámetros de la red neuronal (pesos).
 
+En el entrenamiento observamos que caret encuentra la combinación de hiperparámetros de (size=0.6 y decay 0.5) como la óptima, la cual obtiene un índice de certeza del 84.47%.
+
+A continuación, vamos a observar el rendimiento/índice de certeza del modelo aplicando predicciones en este con el conjunto test de datos.
 ```{r}
 #Mostrar resultados
 
@@ -936,3 +939,4 @@ confMatrix = confusionMatrix(pred_red_neuronal,
 print(confMatrix)
 
 ```
+Finalmente, observamos que el modelo final obtiene un ínidice de certeza del 86,86% al comprobar con el conjunto de datos test.
